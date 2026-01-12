@@ -1,0 +1,43 @@
+{% extends "league/base.html" %}
+{% block title %}Compare Teams{% endblock %}
+{% block content %}
+<h2>Compare Teams</h2>
+
+<form method="get" class="form">
+  <label>Scope:</label>
+  <select name="scope">
+    {% for s in scopes %}
+      <option value="{{ s.id }}" {% if active_scope and s.id == active_scope.id %}selected{% endif %}>
+        {{ s.division.name }} - {{ s.group.name }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <label>A:</label>
+  <select name="team_a">
+    {% for t in teams %}
+      <option value="{{ t.id }}" {% if team_a and t.id == team_a %}selected{% endif %}>{{ t.name }}</option>
+    {% endfor %}
+  </select>
+
+  <label>B:</label>
+  <select name="team_b">
+    {% for t in teams %}
+      <option value="{{ t.id }}" {% if team_b and t.id == team_b %}selected{% endif %}>{{ t.name }}</option>
+    {% endfor %}
+  </select>
+
+  <button type="submit">Compare</button>
+</form>
+
+{% if result %}
+  <h3>Result</h3>
+  <p>Played: {{ result.played }}</p>
+  <p>A W/D/L: {{ result.a_w }} / {{ result.a_d }} / {{ result.a_l }}</p>
+  <p>A Points: {{ result.a_points }} — B Points: {{ result.b_points }}</p>
+  {% if result.biggest_fixture %}
+    <p class="muted">Biggest margin: {{ result.biggest_margin }} ({{ result.biggest_fixture }})</p>
+  {% endif %}
+{% endif %}
+
+{% endblock %}

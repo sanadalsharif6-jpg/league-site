@@ -1,0 +1,93 @@
+{% load dict_extras %}
+
+<h1>Awards</h1>
+
+<form method="get" style="margin-bottom:16px;">
+  <label>Season:</label>
+  <select name="season">
+    {% for s in seasons %}
+      <option value="{{ s.id }}" {% if s.id == active_season.id %}selected{% endif %}>{{ s.name }}</option>
+    {% endfor %}
+  </select>
+
+  <label>Competition:</label>
+  <select name="competition">
+    {% for c in competitions %}
+      <option value="{{ c.id }}" {% if c.id == active_competition.id %}selected{% endif %}>
+        {{ c.name }} ({{ c.get_comp_type_display }})
+      </option>
+    {% endfor %}
+  </select>
+
+  <button type="submit">Apply</button>
+</form>
+
+{% if blocks %}
+  {% for b in blocks %}
+    <h2 style="margin-top:22px;">
+      {% if b.division %}{{ b.division.name }}{% else %}General{% endif %}
+    </h2>
+
+    {% for t in b.types %}
+      <h3 style="margin-top:14px;">{{ t.name }}</h3>
+
+      {% with items=b.grouped|get_item:t %}
+        {% if items %}
+          <ul style="list-style:none;padding:0;">
+            {% for a in items %}
+              <li style="display:flex;align-items:center;gap:10px;margin:10px 0;">
+                {# صورة اللاعب #}
+                {% if a.player and a.player.photo %}
+                  <img src="{{ a.player.photo.url }}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
+                {% endif %}
+
+                <div>
+                  <div>
+                    <strong>
+                      {% if a.player %}{{ a.player.name }}{% else %}{{ a.team.name }}{% endif %}
+                    </strong>
+
+                    {# الفريق + الشعار (إذا الجائزة لاعب، نطلع فريقه الحالي في الموسم إن وجد) #}
+                    {% if a.player %}
+                      {# هنا نستخدم a.team إن الأدمن عبّاها، أو تقدر تخليها إلزامية عند إدخال الجائزة #}
+                      {% if a.team %}
+                        {% if a.team.logo %}
+                          <img src="{{ a.team.logo.url }}" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;">
+                        {% endif %}
+                        <span>{{ a.team.name }}</span>
+                      {% endif %}
+                    {% else %}
+                      {% if a.team and a.team.logo %}
+                        <img src="{{ a.team.logo.url }}" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;">
+                      {% endif %}
+                    {% endif %}
+                  </div>
+
+                  <div style="opacity:.8;font-size:0.95em;">
+                    {{ a.awarded_at|date:"Y-m-d H:i" }}
+                    {% if a.opponent_team or a.opponent_player %}
+                      — ضد
+                      {% if a.opponent_player %}{{ a.opponent_player.name }}{% endif %}
+                      {% if a.opponent_team %} ({{ a.opponent_team.name }}){% endif %}
+                    {% endif %}
+                    {% if a.fixture %}
+                      — Match: {{ a.fixture.home_team.name }} vs {{ a.fixture.away_team.name }}
+                    {% endif %}
+                  </div>
+
+                  {% if a.note %}
+                    <div style="opacity:.75">{{ a.note }}</div>
+                  {% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>No winners yet.</p>
+        {% endif %}
+      {% endwith %}
+    {% endfor %}
+  {% endfor %}
+{% else %}
+  <p>No awards yet.</p>
+{% endif %}

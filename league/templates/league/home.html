@@ -1,0 +1,20 @@
+{% extends "league/base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<h2>Dashboard</h2>
+
+{% if not season or not competition %}
+  <p class="muted">Please create Season and Competition in Admin.</p>
+{% endif %}
+
+{% if scopes %}
+  <p class="muted">Scopes found: {{ scopes|length }}</p>
+  <ul>
+    {% for sc in scopes %}
+      <li><span class="badge">{{ sc.division.name }}</span> <span class="badge">{{ sc.group.name }}</span> — {{ sc.competition.name }}</li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted">No scopes for the selected season/competition. Create scopes in Admin.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,130 @@
+<h1>Compare Players</h1>
+
+<form method="get" style="margin-bottom:16px;">
+  <label>Season:</label>
+  <select name="season">
+    {% for s in seasons %}
+      <option value="{{ s.id }}" {% if season and s.id == season.id %}selected{% endif %}>{{ s.name }}</option>
+    {% endfor %}
+  </select>
+
+  <label>Competition:</label>
+  <select name="competition">
+    {% for c in competitions %}
+      <option value="{{ c.id }}" {% if competition and c.id == competition.id %}selected{% endif %}>
+        {{ c.name }} ({{ c.get_comp_type_display }})
+      </option>
+    {% endfor %}
+  </select>
+
+  <label>Scope:</label>
+  <select name="scope">
+    {% for sc in scopes %}
+      <option value="{{ sc.id }}" {% if active_scope and sc.id == active_scope.id %}selected{% endif %}>
+        {{ sc.division.name }} - {{ sc.group.name }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <label>Player A:</label>
+  <select name="player_a">
+    <option value="">—</option>
+    {% for p in players %}
+      <option value="{{ p.id }}" {% if player_a and p.id == player_a %}selected{% endif %}>{{ p.name }}</option>
+    {% endfor %}
+  </select>
+
+  <label>Player B:</label>
+  <select name="player_b">
+    <option value="">—</option>
+    {% for p in players %}
+      <option value="{{ p.id }}" {% if player_b and p.id == player_b %}selected{% endif %}>{{ p.name }}</option>
+    {% endfor %}
+  </select>
+
+  <button type="submit">Compare</button>
+</form>
+
+<style>
+  .pbox { display:flex; align-items:center; gap:10px; margin:10px 0 16px; }
+  .pimg { width:54px; height:54px; border-radius:50%; object-fit:cover; }
+  .muted { opacity:.75; font-size:12px; }
+  table { border-collapse:collapse; width:100%; margin-top:10px; }
+  th, td { border:1px solid rgba(0,0,0,.08); padding:8px; text-align:left; }
+  th { background:rgba(0,0,0,.02); }
+</style>
+
+{% if a_obj or b_obj %}
+  <div class="pbox">
+    <div>
+      {% if a_obj and a_obj.photo %}
+        <img class="pimg" src="{{ a_obj.photo.url }}" alt="{{ a_obj.name }}">
+      {% endif %}
+      <div><strong>{{ a_obj.name }}</strong></div>
+    </div>
+
+    <div style="font-weight:700;">vs</div>
+
+    <div>
+      {% if b_obj and b_obj.photo %}
+        <img class="pimg" src="{{ b_obj.photo.url }}" alt="{{ b_obj.name }}">
+      {% endif %}
+      <div><strong>{{ b_obj.name }}</strong></div>
+    </div>
+  </div>
+{% endif %}
+
+{% if result %}
+  <h2>Summary</h2>
+  <table>
+    <tr>
+      <th></th>
+      <th>{{ a_obj.name }}</th>
+      <th>{{ b_obj.name }}</th>
+    </tr>
+    <tr>
+      <td>Total Points</td>
+      <td>{{ result.a.total_points }}</td>
+      <td>{{ result.b.total_points }}</td>
+    </tr>
+    <tr>
+      <td>Matches Played</td>
+      <td>{{ result.a.matches_played }}</td>
+      <td>{{ result.b.matches_played }}</td>
+    </tr>
+    <tr>
+      <td>Average</td>
+      <td>{{ result.a.average_points|floatformat:2 }}</td>
+      <td>{{ result.b.average_points|floatformat:2 }}</td>
+    </tr>
+    <tr>
+      <td>Best Match</td>
+      <td>{{ result.a.best_match_points }}</td>
+      <td>{{ result.b.best_match_points }}</td>
+    </tr>
+  </table>
+
+  <h2 style="margin-top:16px;">Last 5</h2>
+  <div class="muted">{{ a_obj.name }}: {{ result.a_last5 }}</div>
+  <div class="muted">{{ b_obj.name }}: {{ result.b_last5 }}</div>
+
+  {% if result.head_to_head %}
+    <h2 style="margin-top:16px;">Head to Head (matches where both played)</h2>
+    <table>
+      <tr>
+        <th>Fixture</th>
+        <th>{{ a_obj.name }}</th>
+        <th>{{ b_obj.name }}</th>
+      </tr>
+      {% for r in result.head_to_head %}
+        <tr>
+          <td>{{ r.fixture.home_team.name }} vs {{ r.fixture.away_team.name }}</td>
+          <td>{{ r.a_pts }}</td>
+          <td>{{ r.b_pts }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% endif %}
+{% else %}
+  <p class="muted">Pick two players and click Compare.</p>
+{% endif %}

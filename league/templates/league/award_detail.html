@@ -1,0 +1,52 @@
+{% extends "league/base.html" %}
+
+{% block content %}
+<h2>{{ ach_type.name }}</h2>
+<p>{{ ach_type.description }}</p>
+
+<form method="get" style="margin-bottom: 12px;">
+  <label>Season:</label>
+  <select name="season">
+    {% for s in seasons %}
+      <option value="{{ s.id }}" {% if s.id == active_season.id %}selected{% endif %}>{{ s.name }}</option>
+    {% endfor %}
+  </select>
+
+  <label style="margin-left: 10px;">Competition:</label>
+  <select name="competition">
+    {% for c in competitions %}
+      <option value="{{ c.id }}" {% if c.id == active_competition.id %}selected{% endif %}>
+        {{ c.name }} ({{ c.get_comp_type_display }})
+      </option>
+    {% endfor %}
+  </select>
+
+  <button type="submit">Apply</button>
+</form>
+
+{% if achievements %}
+  <ul>
+    {% for a in achievements %}
+      <li style="margin: 8px 0;">
+        <strong>{{ a.awarded_at }}</strong> —
+        {% if a.team %}
+          {% if a.team.logo %}<img src="{{ a.team.logo.url }}" style="width:22px;height:22px;border-radius:4px;object-fit:cover;vertical-align:middle;">{% endif %}
+          {{ a.team.name }}
+        {% endif %}
+        {% if a.player %}
+          {% if a.player.photo %}<img src="{{ a.player.photo.url }}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;">{% endif %}
+          {{ a.player.name }}
+        {% endif %}
+        {% if a.scope %}
+          <small style="opacity:.7;">({{ a.scope }})</small>
+        {% endif %}
+        {% if a.note %}
+          <div style="opacity:.8;">{{ a.note }}</div>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No awards for this filter.</p>
+{% endif %}
+{% endblock %}

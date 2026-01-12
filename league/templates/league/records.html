@@ -1,0 +1,13 @@
+{% extends "league/base.html" %}
+{% block content %}
+<h1>Records</h1>
+{% if rec %}
+  <p>Biggest win margin: {{ rec.biggest_win_margin }}</p>
+  <p>Highest team match score: {{ rec.highest_team_match_score }}</p>
+  <p>Highest player score: {{ rec.highest_player_score }}</p>
+  <p>Longest win streak: {{ rec.longest_win_streak }}</p>
+  <p>Longest unbeaten streak: {{ rec.longest_unbeaten_streak }}</p>
+{% else %}
+  <p>No records. Run: python manage.py recalculate_all</p>
+{% endif %}
+{% endblock %}

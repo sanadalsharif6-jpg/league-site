@@ -1,0 +1,61 @@
+{% extends "league/base.html" %}
+{% block title %}Players{% endblock %}
+{% block content %}
+<h2>Players Standings</h2>
+
+{% if not players_by_scope %}
+  <p class="muted">No scopes selected.</p>
+{% endif %}
+
+{% for block in players_by_scope %}
+  <div class="scope-box">
+    <h3>{{ block.scope.division.name }} — {{ block.scope.group.name }}</h3>
+
+    {% if not block.rows %}
+      <p class="muted">No player standings yet for this scope.</p>
+    {% else %}
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Player</th>
+            <th>Team</th>
+            <th>Matches</th>
+            <th>Total</th>
+            <th>Best</th>
+            <th>Avg</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in block.rows %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>
+                <a href="{% url 'league:player_detail' r.player.id %}">
+                  {% if r.player.photo %}
+                    <img class="photo" src="{{ r.player.photo.url }}" alt="">
+                  {% endif %}
+                  {{ r.player.name }}
+                </a>
+              </td>
+              <td>
+                {% if r.team %}
+                  {% if r.team.logo %}<img class="logo" src="{{ r.team.logo.url }}" alt="">{% endif %}
+                  {{ r.team.name }}
+                {% else %}
+                  <span class="muted">—</span>
+                {% endif %}
+              </td>
+              <td>{{ r.matches_played }}</td>
+              <td><b>{{ r.total_points }}</b></td>
+              <td>{{ r.best_match_points }}</td>
+              <td>{{ r.average_points|floatformat:2 }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+{% endfor %}
+
+{% endblock %}

@@ -1,0 +1,25 @@
+<h1>Overall Player Ranking</h1>
+
+{% if rows %}
+  <ol>
+    {% for r in rows %}
+      <li style="margin-bottom:10px;">
+        {% if r.player.photo %}
+          <img src="{{ r.player.photo.url }}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;">
+        {% endif %}
+        <strong>{{ r.player.name }}</strong>
+
+        {% if r.team %}
+          {% if r.team.logo %}
+            <img src="{{ r.team.logo.url }}" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;">
+          {% endif %}
+          <span>{{ r.team.name }}</span>
+        {% endif %}
+
+        — {{ r.total_points }} pts ({{ r.matches_played }} matches)
+      </li>
+    {% endfor %}
+  </ol>
+{% else %}
+  <p>No data yet.</p>
+{% endif %}

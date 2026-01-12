@@ -1,0 +1,52 @@
+{% extends "league/base.html" %}
+{% block title %}Fixtures{% endblock %}
+{% block content %}
+<h2>Fixtures</h2>
+
+{% for block in fixtures_by_scope %}
+  <div class="scope-box">
+    <h3>{{ block.scope.division.name }} — {{ block.scope.group.name }}</h3>
+
+    {% for gwb in block.gameweeks %}
+      <h4>GW{{ gwb.gw.number }} {% if gwb.gw.name %}- {{ gwb.gw.name }}{% endif %}</h4>
+      {% if not gwb.fixtures %}
+        <p class="muted">No fixtures.</p>
+      {% else %}
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Match</th>
+              <th>Score</th>
+              <th>Match Pts</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for f in gwb.fixtures %}
+              <tr>
+                <td>{{ f.kickoff_at }}</td>
+                <td>
+                  {% if f.home_team.logo %}<img class="logo" src="{{ f.home_team.logo.url }}" alt="">{% endif %}
+                  {{ f.home_team.name }}
+                  vs
+                  {% if f.away_team.logo %}<img class="logo" src="{{ f.away_team.logo.url }}" alt="">{% endif %}
+                  {{ f.away_team.name }}
+                </td>
+                <td>
+                  {% if f.is_played %}
+                    <b>{{ f.home_total_points }}</b> - <b>{{ f.away_total_points }}</b>
+                  {% else %}
+                    <span class="muted">—</span>
+                  {% endif %}
+                </td>
+                <td class="muted">{{ f.home_match_points }} - {{ f.away_match_points }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endfor %}
+
+{% endblock %}

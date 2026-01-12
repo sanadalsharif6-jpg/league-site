@@ -1,0 +1,33 @@
+<h1>Hall of Fame</h1>
+
+{% if items %}
+  <ul style="list-style:none;padding:0;">
+    {% for x in items %}
+      <li style="display:flex;align-items:center;gap:10px;margin:10px 0;">
+        {% if x.player.photo %}
+          <img src="{{ x.player.photo.url }}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
+        {% endif %}
+
+        <div>
+          <div>
+            <strong>{{ x.player.name }}</strong>
+            {% if x.team %}
+              {% if x.team.logo %}
+                <img src="{{ x.team.logo.url }}" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;">
+              {% endif %}
+              <span>{{ x.team.name }}</span>
+            {% endif %}
+          </div>
+
+          <div style="opacity:.8;">{{ x.created_at|date:"Y-m-d H:i" }}</div>
+
+          {% if x.note %}
+            <div style="opacity:.75">{{ x.note }}</div>
+          {% endif %}
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No Hall of Fame entries yet.</p>
+{% endif %}

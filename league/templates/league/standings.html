@@ -1,0 +1,163 @@
+{# league/templates/league/standings.html #}
+
+<h1 class="page-title">Standings</h1>
+
+<form method="get" class="filters">
+  <div class="filter">
+    <label for="season">Season</label>
+    <select id="season" name="season">
+      {% for s in seasons %}
+        <option value="{{ s.id }}" {% if season and s.id == season.id %}selected{% endif %}>{{ s.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="filter">
+    <label for="competition">Competition</label>
+    <select id="competition" name="competition">
+      {# هذه الصفحة League فقط (الـ view أصلاً يمرّر competitions = League فقط) #}
+      {% for c in competitions %}
+        <option value="{{ c.id }}" {% if competition and c.id == competition.id %}selected{% endif %}>
+          {{ c.name }} ({{ c.get_comp_type_display }})
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <button type="submit" class="btn">Apply</button>
+</form>
+
+<style>
+  .page-title { margin: 0 0 12px; }
+
+  .filters {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    padding: 12px;
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 10px;
+  }
+  .filter { display: flex; flex-direction: column; gap: 6px; }
+  .filter label { font-size: 12px; opacity: .8; }
+  .filter select {
+    min-width: 180px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,.15);
+  }
+  .btn {
+    padding: 9px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,.18);
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .scope-block { margin: 18px 0 26px; }
+  .scope-title { margin: 0 0 10px; font-size: 18px; }
+
+  table.standings {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  table.standings thead th {
+    text-align: left;
+    font-size: 12px;
+    opacity: .85;
+    padding: 10px 10px;
+    border-bottom: 1px solid rgba(0,0,0,.08);
+    background: rgba(0,0,0,.02);
+    white-space: nowrap;
+  }
+  table.standings tbody td {
+    padding: 10px 10px;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+    vertical-align: middle;
+  }
+  table.standings tbody tr:last-child td { border-bottom: none; }
+
+  .rank { width: 54px; opacity: .8; }
+  .team-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 240px;
+  }
+
+  /* شعار الفريق - بدون مربع أبيض */
+  .team-logo {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    background: transparent !important;
+    display: inline-block;
+  }
+
+  .muted { opacity: .75; font-size: 12px; }
+  .nowrap { white-space: nowrap; }
+</style>
+
+{% if standings_by_scope %}
+  {% for block in standings_by_scope %}
+    <div class="scope-block">
+      <h2 class="scope-title">
+        {{ block.scope.division.name }} — {{ block.scope.group.name }}
+      </h2>
+
+      {% if block.rows %}
+        <table class="standings">
+          <thead>
+            <tr>
+              <th class="rank">#</th>
+              <th>Team</th>
+              <th class="nowrap">P</th>
+              <th class="nowrap">W</th>
+              <th class="nowrap">D</th>
+              <th class="nowrap">L</th>
+              <th class="nowrap">MP</th>
+              <th class="nowrap">TP</th>
+              <th class="nowrap">Form</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in block.rows %}
+              <tr>
+                <td class="rank">{{ forloop.counter }}</td>
+
+                <td>
+                  <div class="team-cell">
+                    {% if row.team.logo %}
+                      <img class="team-logo" src="{{ row.team.logo.url }}" alt="{{ row.team.name }} logo">
+                    {% endif %}
+                    <div>
+                      <div><strong>{{ row.team.name }}</strong></div>
+                      <div class="muted">{{ block.scope.competition.name }}</div>
+                    </div>
+                  </div>
+                </td>
+
+                <td class="nowrap">{{ row.played }}</td>
+                <td class="nowrap">{{ row.wins }}</td>
+                <td class="nowrap">{{ row.draws }}</td>
+                <td class="nowrap">{{ row.losses }}</td>
+                <td class="nowrap"><strong>{{ row.match_points }}</strong></td>
+                <td class="nowrap">{{ row.total_points }}</td>
+                <td class="nowrap">{{ row.form_last5 }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="muted">No standings data for this scope yet.</p>
+      {% endif %}
+    </div>
+  {% endfor %}
+{% else %}
+  <p class="muted">No scopes found for this season/competition.</p>
+{% endif %}
