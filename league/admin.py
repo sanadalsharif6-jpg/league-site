@@ -154,36 +154,28 @@ def create_replays(modeladmin, request, queryset):
 @admin.register(Fixture)
 class FixtureAdmin(admin.ModelAdmin):
     list_display = (
-        "kickoff_at", "scope", "gameweek", "home_team", "away_team",
-        "replay_of",
+        "id", "kickoff_at", "scope_id", "scope_short", "gameweek",
+        "home_team", "away_team",
+        "replay_of_id",
         "is_played", "home_total_points", "away_total_points",
-        "home_match_points", "away_match_points"
     )
     list_filter = (
-        "scope__season",
-        "scope__competition",
-        "scope__division", 
-        "scope__group",
-        "gameweek__number",
-        "is_played"
+        "scope__season", "scope__competition", "scope__division", "scope__group",
+        "gameweek__number", "is_played"
     )
-    search_fields = (
-        "home_team_name", "away_team_name",
-        "scope_seasonname", "scopecompetition_name"
-    )
+    search_fields = ("home_team__name", "away_team__name")
     date_hierarchy = "kickoff_at"
-    list_per_page = 50
-    actions = [create_replays]
+    list_per_page = 25
 
-    # بدل dropdowns الثقيلة
-    autocomplete_fields = ("scope", "gameweek", "home_team", "away_team", "replay_of")
+    list_select_related = (
+        "scope", "scope__season", "scope__competition", "scope__division", "scope__group",
+        "gameweek", "home_team", "away_team", "replay_of"
+    )
 
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related(
-            "scope", "gameweek", "home_team", "away_team",
-            "scope_season", "scopecompetition", "scopedivision", "scope_group",
-            "replay_of"
-        )
+    def scope_short(self, obj):
+        s = obj.scope
+        return f"{s.season.name} | {s.competition.comp_type} | {s.division.name} | {s.group.name}"
+    scope_short.short_description = "Scope"
 
 
 # =========================
@@ -196,10 +188,8 @@ class PlayerScoreInline(admin.TabularInline):
     min_num = 0
     max_num = 6
 
-    # هذا أهم حل للـOOM: بدل dropdown ضخم، نخليها autocomplete
+    # أهم شيء: لا Dropdown لاعبين
     autocomplete_fields = ("player",)
-    fields = ("player", "points")
-    ordering = ("id",)
 
     def get_extra(self, request, obj=None, **kwargs):
         return 0 if obj is None else 6
@@ -211,74 +201,63 @@ class PlayerScoreInline(admin.TabularInline):
         return 6
 
     def get_formset(self, request, obj=None, **kwargs):
-        """
-        فلترة اللاعبين حسب لاعبي الفريقين في هذا الـFixture.
-        ملاحظة: تعديل base_fields هنا ممكن يأثر عالمستوى العام،
-        لكن بما أننا نستخدمه داخل request واحد وبـautocomplete،
-        هذا عملي وآمن في حالتك.
-        """
         formset = super().get_formset(request, obj=obj, **kwargs)
 
-        # قبل ما يكون عندنا Result محفوظ ومربوط بـFixture: نخليها فاضية
+        # على صفحة الإضافة قبل اختيار fixture لا تعرض لاعبين
         if obj is None or not getattr(obj, "fixture_id", None):
             formset.form.base_fields["player"].queryset = Player.objects.none()
             return formset
 
         fixture = obj.fixture
-
-        # ✅ فلترة لاعبي الفريقين فقط (وأفضل: فلترة على نفس الموسم)
-        season_id = fixture.scope.season_id
-
         allowed_ids = TeamMembership.objects.filter(
-            season_id=season_id,
             team_id__in=[fixture.home_team_id, fixture.away_team_id],
+            season_id=fixture.scope.season_id,   # مهم: فلترة الموسم
         ).values_list("player_id", flat=True)
 
         formset.form.base_fields["player"].queryset = (
-            Player.objects.filter(id__in=allowed_ids)
-            .distinct()
-            .order_by("name")
+            Player.objects.filter(id__in=allowed_ids).distinct().order_by("name")
         )
         return formset
 
 
+
 @admin.register(Result)
 class ResultAdmin(admin.ModelAdmin):
-    """
-    المنطق المطلوب منك:
-    - لما تضيف Result: تختار Fixture وتعمل Save and continue editing
-    - بعدها فقط يظهر Inline اللاعبين
-    """
     inlines = [PlayerScoreInline]
 
-    list_display = ("fixture", "created_at_safe")
-    search_fields = ("fixture_home_teamname", "fixtureaway_team_name")
-    list_per_page = 50
-
+    # مهم: يخلي اختيار الـ fixture سريع وما يحملش قائمة ضخمة
     autocomplete_fields = ("fixture",)
 
-    def created_at_safe(self, obj):
-        # لو عندك created_at في الموديل
-        return getattr(obj, "created_at", "—")
-    created_at_safe.short_description = "Created"
+    # مهم: ما يخليش Django يعتمد على __str__ الثقيل في اللستة
+    list_display = ("id", "fixture_id", "fixture_short", "updated_at")
+    list_select_related = (
+        "fixture",
+        "fixture__home_team",
+        "fixture__away_team",
+        "fixture__gameweek",
+        "fixture__scope",
+        "fixture__scope__season",
+        "fixture__scope__competition",
+        "fixture__scope__division",
+        "fixture__scope__group",
+    )
+    list_per_page = 25
+    search_fields = (
+        "fixture__home_team__name",
+        "fixture__away_team__name",
+        "fixture__scope__season__name",
+    )
 
-    def add_view(self, request, form_url="", extra_context=None):
-        extra_context = extra_context or {}
-        extra_context["show_save_and_continue"] = True
-        return super().add_view(request, form_url, extra_context=extra_context)
+    def fixture_short(self, obj):
+        f = obj.fixture
+        return f"GW{f.gameweek.number} | {f.home_team} vs {f.away_team} | {f.kickoff_at:%Y-%m-%d}"
+    fixture_short.short_description = "Fixture"
 
     def get_inline_instances(self, request, obj=None):
+        # نفس فكرتك: ما نفتحش الـ inlines إلا بعد ما يصير في Result محفوظ
         if obj is None:
             return []
         return super().get_inline_instances(request, obj=obj)
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related(
-            "fixture",
-            "fixture_scope", "fixturescopeseason", "fixturescope_competition",
-            "fixture_home_team", "fixture_away_team",
-            "fixture__gameweek",
-        )
 
 
 # =========================
