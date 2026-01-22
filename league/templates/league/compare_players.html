@@ -1,4 +1,7 @@
-<h1>Compare Players</h1>
+{% extends "league/base.html" %}
+    {% block title %}Compare Players | XL - LIBYAN FANTASY{% endblock %}
+    {% block content %}
+    <h1>Compare Players</h1>
 
 <form method="get" style="margin-bottom:16px;">
   <label>Season:</label>
@@ -128,3 +131,5 @@
 {% else %}
   <p class="muted">Pick two players and click Compare.</p>
 {% endif %}
+
+    {% endblock %}

@@ -11,9 +11,10 @@ from django.db.models import Prefetch
 from .models import (
     Season, Competition, Scope,
     Team, Player, TeamMembership, Transfer,
-    Gameweek, Fixture, Stage, Bracket, BracketRound, BracketTie,
+    Gameweek, Fixture,
     TeamStanding, PlayerStanding,
     AchievementType, Achievement,
+    Stage, Bracket, BracketRound, BracketTie,
 )
 from .services import head_to_head, player_vs_player
 from .utils import sort_standings_with_h2h
@@ -62,6 +63,16 @@ def home(request):
             .order_by("division__order", "group__order")
         )
 
+
+    scope_id = request.GET.get("scope")
+    selected_scope = None
+    if scope_id:
+        for sc in scopes:
+            if str(sc.id) == str(scope_id):
+                selected_scope = sc
+                scopes = [sc]
+                break
+
     context = {
         "season": season,
         "competition": comp,
@@ -96,6 +107,17 @@ def standings(request):
         .order_by("division__order", "group__order")
     )
 
+
+    # Optional: show one table/group only
+    scope_id = request.GET.get("scope")
+    selected_scope = None
+    if scope_id:
+        for sc in scopes:
+            if str(sc.id) == str(scope_id):
+                selected_scope = sc
+                scopes = [sc]
+                break
+
     standings_by_scope = []
     for sc in scopes:
         rows_qs = (
@@ -128,6 +150,8 @@ def standings(request):
         "seasons": seasons,
         "competitions": competitions,
         "standings_by_scope": standings_by_scope,
+        "scopes": Scope.objects.filter(season=season, competition=comp).select_related("division","group").order_by("division__order","group__order"),
+        "selected_scope": locals().get("selected_scope"),
     })
 
 def players_list(request):
@@ -136,6 +160,16 @@ def players_list(request):
     scopes = []
     if season and comp:
         scopes = list(Scope.objects.filter(season=season, competition=comp).order_by("division__order", "group__order"))
+
+
+    scope_id = request.GET.get("scope")
+    selected_scope = None
+    if scope_id:
+        for sc in scopes:
+            if str(sc.id) == str(scope_id):
+                selected_scope = sc
+                scopes = [sc]
+                break
 
     # ربط اللاعب بفريقه الحالي في الموسم (Active membership)
     memberships = TeamMembership.objects.filter(season=season, end_date__isnull=True).select_related("player", "team")
@@ -249,118 +283,6 @@ def fixtures_view(request):
     }
     return render(request, "league/fixtures.html", context)
 
-
-
-
-
-
-def playoffs_index(request):
-    season, competition = _active_season_competition(request)
-    stages = (
-        Stage.objects.filter(scope__season=season, scope__competition=competition, stage_type=Stage.KNOCKOUT)
-        .select_related("scope", "scope__division", "scope__group")
-        .order_by("scope__division__order", "scope__group__order", "order")
-    )
-    return render(request, "league/playoffs_index.html", {"season": season, "competition": competition, "stages": stages})
-
-def playoffs_bracket(request, stage_id: int):
-    """Render a bracket map for a knockout Stage (League playoffs / Cup QF+)."""
-    stage = get_object_or_404(Stage.objects.select_related("scope", "scope__season", "scope__competition", "scope__division", "scope__group"), pk=stage_id)
-
-    if stage.stage_type != Stage.KNOCKOUT:
-        # For non-knockout stages, redirect to fixtures list filtered by stage
-        return fixtures_view(request)
-
-    bracket = getattr(stage, "bracket", None)
-    if not bracket or not stage.show_bracket:
-        # If bracket is disabled, show fixtures list for this stage
-        qs = (
-            Fixture.objects.filter(stage=stage)
-            .select_related("scope", "gameweek", "home_team", "away_team")
-            .order_by("kickoff_at")
-        )
-        return render(request, "league/playoffs_list.html", {"stage": stage, "fixtures": qs})
-
-    rounds = (
-        BracketRound.objects.filter(bracket=bracket)
-        .prefetch_related(
-            Prefetch(
-                "ties",
-                queryset=BracketTie.objects.select_related(
-                    "leg1_fixture",
-                    "leg2_fixture",
-                    "winner_team",
-                    "home_winner_from",
-                    "away_winner_from",
-                    "leg1_fixture__home_team",
-                    "leg1_fixture__away_team",
-                    "leg2_fixture__home_team",
-                    "leg2_fixture__away_team",
-                ).order_by("tie_no"),
-            )
-        )
-        .order_by("order")
-    )
-
-    def tie_display(tie: BracketTie):
-        # Prefer leg1 teams for naming
-        leg1 = tie.leg1_fixture
-        leg2 = tie.leg2_fixture
-
-        def team_label(side: str):
-            fx = leg1 or leg2
-            if fx:
-                return fx.home_team.name if side == "home" else fx.away_team.name
-            ref = tie.home_winner_from if side == "home" else tie.away_winner_from
-            if ref:
-                return f"Winner of Tie {ref.tie_no}"
-            return "TBD"
-
-        home_name = team_label("home")
-        away_name = team_label("away")
-
-        # Scores (aggregate if two legs)
-        def leg_score(fx: Fixture | None):
-            if not fx:
-                return None
-            if not fx.is_played:
-                return None
-            return (fx.home_total_points, fx.away_total_points)
-
-        leg1_score = leg_score(leg1)
-        leg2_score = leg_score(leg2)
-
-        agg = None
-        if leg1_score or leg2_score:
-            h = (leg1_score[0] if leg1_score else 0) + (leg2_score[0] if leg2_score else 0)
-            a = (leg1_score[1] if leg1_score else 0) + (leg2_score[1] if leg2_score else 0)
-            agg = (h, a)
-
-        return {
-            "tie": tie,
-            "home_name": home_name,
-            "away_name": away_name,
-            "leg1": leg1,
-            "leg2": leg2,
-            "leg1_score": leg1_score,
-            "leg2_score": leg2_score,
-            "agg": agg,
-            "winner": tie.winner_team.name if tie.winner_team else None,
-        }
-
-    rounds_ctx = []
-    for r in rounds:
-        rounds_ctx.append({"round": r, "ties": [tie_display(t) for t in r.ties.all()]})
-
-    return render(
-        request,
-        "league/playoffs_bracket.html",
-        {
-            "stage": stage,
-            "bracket": bracket,
-            "rounds": rounds_ctx,
-        },
-    )
 
 def teams_list(request):
     teams = Team.objects.order_by("name")
@@ -651,3 +573,64 @@ def players_overall(request):
         "rows": rows,
     })
 
+
+
+# =========================
+# Playoffs / Brackets
+# =========================
+
+def playoffs_index(request):
+    season, comp, seasons, competitions = _active_season_competition(request)
+
+    # Show all knockout stages for selected season (across competitions)
+    scopes = Scope.objects.filter(season=season).select_related("competition", "division", "group")
+    stages = (
+        Stage.objects.filter(scope__in=scopes, stage_type=Stage.KNOCKOUT)
+        .select_related("scope", "scope__competition", "scope__division", "scope__group", "scope__season")
+        .order_by("scope__competition__name", "scope__division__order", "scope__group__order", "order", "id")
+    )
+
+    return render(request, "league/playoffs_index.html", {
+        "season": season,
+        "seasons": seasons,
+        "stages": stages,
+    })
+
+
+def stage_detail(request, stage_id: int):
+    stage = (
+        Stage.objects.select_related(
+            "scope", "scope__season", "scope__competition", "scope__division", "scope__group"
+        )
+        .get(pk=stage_id)
+    )
+
+    # If bracket stage with show_bracket=True, render bracket grid
+    bracket = getattr(stage, "bracket", None)
+    if stage.show_bracket and bracket:
+        rounds = (
+            BracketRound.objects.filter(bracket=bracket)
+            .prefetch_related(
+                "ties",
+                "ties__leg1_fixture", "ties__leg1_fixture__home_team", "ties__leg1_fixture__away_team",
+                "ties__leg2_fixture", "ties__leg2_fixture__home_team", "ties__leg2_fixture__away_team",
+            )
+            .order_by("order")
+        )
+        return render(request, "league/playoffs_bracket.html", {
+            "stage": stage,
+            "bracket": bracket,
+            "rounds": rounds,
+        })
+
+    # Otherwise list fixtures that belong to this stage
+    fixtures = (
+        Fixture.objects.filter(stage=stage)
+        .select_related("home_team", "away_team", "scope", "scope__competition", "gameweek")
+        .order_by("kickoff_at")
+    )
+
+    return render(request, "league/playoffs_list.html", {
+        "stage": stage,
+        "fixtures": fixtures,
+    })

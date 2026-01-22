@@ -109,7 +109,20 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 
+
+# Django 4.2+/5+/6+ recommended storage configuration
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+ENABLE_SCOPE_REBUILD_ON_SAVE = False  # do NOT rebuild heavy standings on every admin save
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # =========================

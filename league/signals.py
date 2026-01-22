@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db.models import Q
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
@@ -74,22 +75,26 @@ def result_saved(sender, instance: Result, created: bool, **kwargs):
         _ensure_default_player_scores(instance)
 
     recalculate_fixture_totals(instance.fixture_id)
-    _rebuild_related_scope_by_fixture_id(instance.fixture_id)
+    if getattr(settings, 'ENABLE_SCOPE_REBUILD_ON_SAVE', False):
+        _rebuild_related_scope_by_fixture_id(instance.fixture_id)
 
 
 @receiver(post_delete, sender=Result)
 def result_deleted(sender, instance: Result, **kwargs):
     recalculate_fixture_totals(instance.fixture_id)
-    _rebuild_related_scope_by_fixture_id(instance.fixture_id)
+    if getattr(settings, 'ENABLE_SCOPE_REBUILD_ON_SAVE', False):
+        _rebuild_related_scope_by_fixture_id(instance.fixture_id)
 
 
 @receiver(post_save, sender=PlayerScore)
 def player_score_saved(sender, instance: PlayerScore, **kwargs):
     recalculate_fixture_totals(instance.result.fixture_id)
-    _rebuild_related_scope_by_fixture_id(instance.result.fixture_id)
+    if getattr(settings, 'ENABLE_SCOPE_REBUILD_ON_SAVE', False):
+        _rebuild_related_scope_by_fixture_id(instance.result.fixture_id)
 
 
 @receiver(post_delete, sender=PlayerScore)
 def player_score_deleted(sender, instance: PlayerScore, **kwargs):
     recalculate_fixture_totals(instance.result.fixture_id)
-    _rebuild_related_scope_by_fixture_id(instance.result.fixture_id)
+    if getattr(settings, 'ENABLE_SCOPE_REBUILD_ON_SAVE', False):
+        _rebuild_related_scope_by_fixture_id(instance.result.fixture_id)

@@ -1,4 +1,7 @@
-{# league/templates/league/standings.html #}
+{% extends "league/base.html" %}
+    {% block title %}Standings | XL - LIBYAN FANTASY{% endblock %}
+    {% block content %}
+    {# league/templates/league/standings.html #}
 
 <h1 class="page-title">Standings</h1>
 
@@ -24,7 +27,20 @@
     </select>
   </div>
 
-  <button type="submit" class="btn">Apply</button>
+
+<div class="filter">
+  <label for="scope">Table / Group</label>
+  <select id="scope" name="scope">
+    <option value="">All</option>
+    {% for sc in scopes %}
+      <option value="{{ sc.id }}" {% if selected_scope and sc.id == selected_scope.id %}selected{% endif %}>
+        {{ sc.division.name }} - {{ sc.group.name }}
+      </option>
+    {% endfor %}
+  </select>
+</div>
+
+<button type="submit" class="btn">Apply</button>
 </form>
 
 <style>
@@ -161,3 +177,5 @@
 {% else %}
   <p class="muted">No scopes found for this season/competition.</p>
 {% endif %}
+
+    {% endblock %}

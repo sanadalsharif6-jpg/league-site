@@ -1,27 +1,33 @@
 {% extends "league/base.html" %}
 {% block title %}Playoffs | XL - LIBYAN FANTASY{% endblock %}
-
 {% block content %}
-<h1>Playoffs</h1>
-<p style="opacity:.85;margin-top:-6px;">
-  {{ season.name }} — {{ competition.name }}
-</p>
+<div class="xl-hero">
+  <div class="xl-hero__inner">
+    <div>
+      <h1 class="xl-title">Playoffs</h1>
+      <p class="xl-subtitle">Knockout stages for {{ season.name }}</p>
+    </div>
+  </div>
+</div>
 
-{% if stages %}
-  <ul>
-    {% for s in stages %}
-      <li style="margin: 8px 0;">
-        <strong>{{ s.scope.division.name }} — {{ s.scope.group.name }}</strong>:
-        <a href="{% url 'league:playoffs' s.id %}">{{ s.name }}</a>
-        {% if s.show_bracket %}<span style="opacity:.75;">(Bracket)</span>{% else %}<span style="opacity:.75;">(List)</span>{% endif %}
-      </li>
-    {% endfor %}
-  </ul>
-{% else %}
-  <p>No knockout stages yet. Create stages in Admin → Stages.</p>
-{% endif %}
-
-<p style="opacity:.8;margin-top:14px;">
-  League idea: create a “League Playoffs” stage per group scope after GW30. Cup idea: set early rounds as list-only, and enable bracket starting from Quarterfinals.
-</p>
+<div class="xl-card mt-4">
+  <div class="xl-card__body">
+    <div class="xl-grid">
+      {% for st in stages %}
+        <a class="xl-stage" href="{% url 'league:stage_detail' st.id %}">
+          <div class="xl-stage__top">
+            <div class="xl-chip">{{ st.scope.competition.name }}</div>
+            <div class="xl-chip">{{ st.scope.division.name }} · {{ st.scope.group.name }}</div>
+          </div>
+          <div class="xl-stage__name">{{ st.name }}</div>
+          <div class="xl-stage__meta">
+            {% if st.show_bracket %}Bracket view{% else %}List view{% endif %}
+          </div>
+        </a>
+      {% empty %}
+        <div class="muted">No knockout stages created yet.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
 {% endblock %}

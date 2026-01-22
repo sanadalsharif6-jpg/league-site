@@ -14,11 +14,11 @@ class Migration(migrations.Migration):
             fields=[
                 ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
                 ("name", models.CharField(max_length=80)),
-                ("stage_type", models.CharField(choices=[("REGULAR", "Regular Season"), ("KNOCKOUT", "Knockout")], max_length=20)),
-                ("order", models.PositiveIntegerField(default=1)),
+                ("stage_type", models.CharField(choices=[("REGULAR", "Regular"), ("KNOCKOUT", "Knockout")], max_length=20)),
                 ("start_gameweek", models.PositiveIntegerField(blank=True, null=True)),
                 ("end_gameweek", models.PositiveIntegerField(blank=True, null=True)),
                 ("show_bracket", models.BooleanField(default=False)),
+                ("order", models.PositiveIntegerField(default=1)),
                 ("scope", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="stages", to="league.scope")),
             ],
             options={
@@ -29,14 +29,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="fixture",
             name="stage",
-            field=models.ForeignKey(
-                blank=True,
-                help_text="Optional stage (e.g., Regular Season, League Playoffs, Cup Quarterfinals).",
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="fixtures",
-                to="league.stage",
-            ),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="fixtures", to="league.stage"),
         ),
         migrations.CreateModel(
             name="Bracket",
@@ -67,14 +60,11 @@ class Migration(migrations.Migration):
             fields=[
                 ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
                 ("tie_no", models.PositiveIntegerField(default=1)),
-                ("home_seed", models.PositiveIntegerField(blank=True, null=True)),
-                ("away_seed", models.PositiveIntegerField(blank=True, null=True)),
-                ("away_winner_from", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="away_to", to="league.brackettie")),
-                ("home_winner_from", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="home_to", to="league.brackettie")),
-                ("leg1_fixture", models.OneToOneField(blank=True, help_text="First leg fixture (required for two-legs; optional while drafting).", null=True, on_delete=django.db.models.deletion.PROTECT, related_name="bracket_leg1_of", to="league.fixture")),
-                ("leg2_fixture", models.OneToOneField(blank=True, help_text="Second leg fixture (only for two-legs).", null=True, on_delete=django.db.models.deletion.PROTECT, related_name="bracket_leg2_of", to="league.fixture")),
+                ("away_from_tie", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="away_to", to="league.brackettie")),
+                ("home_from_tie", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="home_to", to="league.brackettie")),
+                ("leg1_fixture", models.OneToOneField(on_delete=django.db.models.deletion.PROTECT, related_name="bracket_leg1", to="league.fixture")),
+                ("leg2_fixture", models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name="bracket_leg2", to="league.fixture")),
                 ("round", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="ties", to="league.bracketround")),
-                ("winner_team", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="won_ties", to="league.team")),
             ],
             options={
                 "ordering": ["round__order", "tie_no"],
