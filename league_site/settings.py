@@ -111,14 +111,24 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 
 # Django 4.2+/5+/6+ recommended storage configuration
-STORAGES = {
-    "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+# =========================
+# Storage (Cloudinary on Render; local fallback)
+# =========================
+USE_CLOUDINARY = bool(os.environ.get("CLOUDINARY_URL"))
+
+if USE_CLOUDINARY:
+    STORAGES = {
+        "default": {"BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage"},
+        "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    }
+else:
+    STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    }
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 ENABLE_SCOPE_REBUILD_ON_SAVE = False  # do NOT rebuild heavy standings on every admin save
