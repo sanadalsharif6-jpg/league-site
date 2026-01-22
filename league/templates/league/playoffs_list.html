@@ -1,0 +1,22 @@
+{% extends "league/base.html" %}
+{% block title %}{{ stage.name }} | XL - LIBYAN FANTASY{% endblock %}
+
+{% block content %}
+<h1>{{ stage.name }}</h1>
+<p style="opacity:.85;margin-top:-6px;">
+  {{ stage.scope.season.name }} — {{ stage.scope.competition.name }} — {{ stage.scope.division.name }} — {{ stage.scope.group.name }}
+</p>
+
+<p class="note">Bracket view is disabled for this stage. Showing fixtures list instead.</p>
+
+<ul>
+  {% for f in fixtures %}
+    <li>
+      {{ f.kickoff_at }} — <strong>{{ f.home_team.name }}</strong> vs <strong>{{ f.away_team.name }}</strong>
+      {% if f.is_played %} — {{ f.home_total_points }} : {{ f.away_total_points }}{% endif %}
+    </li>
+  {% empty %}
+    <li>No fixtures in this stage yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

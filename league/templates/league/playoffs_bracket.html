@@ -1,0 +1,75 @@
+{% extends "league/base.html" %}
+{% block title %}{{ stage.name }} | XL - LIBYAN FANTASY{% endblock %}
+
+{% block content %}
+<h1>{{ stage.name }}</h1>
+<p style="opacity:.85;margin-top:-6px;">
+  {{ stage.scope.season.name }} — {{ stage.scope.competition.name }} — {{ stage.scope.division.name }} — {{ stage.scope.group.name }}
+</p>
+
+<div class="bracket-meta">
+  <span><strong>Teams:</strong> {{ bracket.teams_count }}</span>
+  <span style="margin-left:14px;"><strong>Format:</strong> {% if bracket.two_legs %}Two legs{% else %}Single match{% endif %}</span>
+</div>
+
+<style>
+  .bracket-wrap { overflow-x: auto; padding: 10px 0; }
+  .bracket { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(260px, 1fr); gap: 18px; align-items: start; }
+  .round-col { background: #0f172a08; border: 1px solid #0f172a14; border-radius: 10px; padding: 12px; min-height: 120px; }
+  .round-title { font-weight: 700; margin-bottom: 10px; }
+  .tie { background: #ffffff; border: 1px solid #0f172a1f; border-radius: 10px; padding: 10px; margin-bottom: 10px; }
+  .team-row { display:flex; justify-content:space-between; gap:10px; padding:4px 0; }
+  .team-name { font-weight: 600; }
+  .score { font-variant-numeric: tabular-nums; opacity: .9; }
+  .sub { font-size: 12px; opacity: .8; margin-top: 6px; }
+  .winner { margin-top: 6px; font-size: 12px; font-weight: 700; color: #0b5; }
+  .tie:hover { transform: translateY(-1px); transition: transform .15s ease; }
+  .pill { display:inline-block; padding: 2px 8px; border-radius: 999px; background:#0f172a0f; font-size: 12px; }
+</style>
+
+<div class="bracket-wrap">
+  <div class="bracket">
+    {% for rc in rounds %}
+      <div class="round-col">
+        <div class="round-title">{{ rc.round.name }}</div>
+
+        {% for t in rc.ties %}
+          <div class="tie">
+            <div class="team-row">
+              <div class="team-name">{{ t.home_name }}</div>
+              <div class="score">
+                {% if t.agg %}<span class="pill">Agg {{ t.agg.0 }} - {{ t.agg.1 }}</span>{% else %}<span class="pill">TBD</span>{% endif %}
+              </div>
+            </div>
+            <div class="team-row">
+              <div class="team-name">{{ t.away_name }}</div>
+              <div class="score"></div>
+            </div>
+
+            <div class="sub">
+              {% if t.leg1 %}
+                Leg 1: <a href="{% url 'league:fixtures' %}?fixture_id={{ t.leg1.id }}">Fixture #{{ t.leg1.id }}</a>
+                {% if t.leg1_score %} — {{ t.leg1_score.0 }} - {{ t.leg1_score.1 }}{% endif %}
+              {% endif %}
+              {% if t.leg2 %}
+                <br>Leg 2: <a href="{% url 'league:fixtures' %}?fixture_id={{ t.leg2.id }}">Fixture #{{ t.leg2.id }}</a>
+                {% if t.leg2_score %} — {{ t.leg2_score.0 }} - {{ t.leg2_score.1 }}{% endif %}
+              {% endif %}
+            </div>
+
+            {% if t.winner %}
+              <div class="winner">Winner: {{ t.winner }}</div>
+            {% endif %}
+          </div>
+        {% empty %}
+          <p>No ties configured for this round yet.</p>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<p style="opacity:.8;margin-top:14px;">
+  Admin tip: create fixtures first, then link them into Bracket Ties (leg1/leg2). For Cup early rounds, disable “Show bracket” on the Stage to keep list view.
+</p>
+{% endblock %}

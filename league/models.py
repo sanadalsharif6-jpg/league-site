@@ -173,6 +173,112 @@ class Transfer(models.Model):
         return f"{self.season}: {self.player} {self.from_team or '-'} -> {self.to_team} ({self.date})"
 
 
+
+
+
+class Stage(models.Model):
+    """A competition stage inside a Scope (e.g., Regular Season GW1-30, League Playoffs, Cup QF)."""
+
+    REGULAR = "REGULAR"
+    KNOCKOUT = "KNOCKOUT"
+    STAGE_TYPES = [
+        (REGULAR, "Regular Season"),
+        (KNOCKOUT, "Knockout"),
+    ]
+
+    scope = models.ForeignKey(Scope, on_delete=models.CASCADE, related_name="stages")
+    name = models.CharField(max_length=80)
+    stage_type = models.CharField(max_length=20, choices=STAGE_TYPES)
+    order = models.PositiveIntegerField(default=1)
+
+    # For REGULAR stages (optional)
+    start_gameweek = models.PositiveIntegerField(null=True, blank=True)
+    end_gameweek = models.PositiveIntegerField(null=True, blank=True)
+
+    # For KNOCKOUT stages: whether to render a bracket map (cup early rounds can be list-only)
+    show_bracket = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = [("scope", "name")]
+        ordering = ["order", "id"]
+
+    def __str__(self) -> str:
+        return f"{self.scope} | {self.name}"
+
+
+class Bracket(models.Model):
+    """Bracket container for a KNOCKOUT stage."""
+
+    stage = models.OneToOneField(Stage, on_delete=models.CASCADE, related_name="bracket")
+    title = models.CharField(max_length=120, blank=True, default="")
+    teams_count = models.PositiveIntegerField(default=16)  # 4/8/16...
+    two_legs = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return self.title or f"Bracket: {self.stage}"
+
+
+class BracketRound(models.Model):
+    bracket = models.ForeignKey(Bracket, on_delete=models.CASCADE, related_name="rounds")
+    name = models.CharField(max_length=60)  # Round of 16, Quarterfinals, Semis, Final
+    order = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        unique_together = [("bracket", "order")]
+        ordering = ["bracket", "order"]
+
+    def __str__(self) -> str:
+        return f"{self.bracket.stage} | {self.name}"
+
+
+class BracketTie(models.Model):
+    """One tie in a knockout round. Supports 1 or 2 legs by linking to 1-2 Fixtures."""
+
+    round = models.ForeignKey(BracketRound, on_delete=models.CASCADE, related_name="ties")
+    tie_no = models.PositiveIntegerField(default=1)
+
+    leg1_fixture = models.OneToOneField(
+        "Fixture",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="bracket_leg1_of",
+        help_text="First leg fixture (required for two-legs; optional while drafting).",
+    )
+    leg2_fixture = models.OneToOneField(
+        "Fixture",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="bracket_leg2_of",
+        help_text="Second leg fixture (only for two-legs).",
+    )
+
+    # Optional seeding
+    home_seed = models.PositiveIntegerField(null=True, blank=True)
+    away_seed = models.PositiveIntegerField(null=True, blank=True)
+
+    # Optional links to previous ties (used to describe 'Winner of Tie X')
+    home_winner_from = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="home_to"
+    )
+    away_winner_from = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="away_to"
+    )
+
+    # Winner (set by admin or computed later)
+    winner_team = models.ForeignKey(
+        Team, on_delete=models.SET_NULL, null=True, blank=True, related_name="won_ties"
+    )
+
+    class Meta:
+        unique_together = [("round", "tie_no")]
+        ordering = ["round__order", "tie_no"]
+
+    def __str__(self) -> str:
+        return f"{self.round} | Tie {self.tie_no}"
 class Gameweek(models.Model):
     number = models.PositiveIntegerField()
     name = models.CharField(max_length=60, blank=True, default="")
@@ -188,6 +294,16 @@ class Fixture(models.Model):
     scope = models.ForeignKey(Scope, on_delete=models.CASCADE, related_name="fixtures")
     gameweek = models.ForeignKey(Gameweek, on_delete=models.CASCADE, related_name="fixtures")
     kickoff_at = models.DateTimeField()
+
+    stage = models.ForeignKey(
+        Stage,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="fixtures",
+        help_text="Optional stage (e.g., Regular Season, League Playoffs, Cup Quarterfinals).",
+    )
+
 
     home_team = models.ForeignKey(Team, on_delete=models.PROTECT, related_name="home_fixtures")
     away_team = models.ForeignKey(Team, on_delete=models.PROTECT, related_name="away_fixtures")

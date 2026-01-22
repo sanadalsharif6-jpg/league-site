@@ -10,6 +10,7 @@ from .models import (
     Season, Division, Group, Competition, Scope,
     Team, Player, TeamMembership, Transfer,
     Gameweek, Fixture, Result, PlayerScore,
+    Stage, Bracket, BracketRound, BracketTie,
     AchievementType, Achievement,
     TeamStanding, PlayerStanding, RecordSnapshot, PowerRanking, HallOfFameEntry,
 )
@@ -386,3 +387,43 @@ class HallOfFameEntryAdmin(admin.ModelAdmin):
     search_fields = ("player_name", "season_name", "note")
     list_per_page = 100
     autocomplete_fields = ("season", "player")  
+
+# -------------------------
+# Playoffs / Brackets admin
+# -------------------------
+
+class BracketTieInline(admin.TabularInline):
+    model = BracketTie
+    extra = 0
+    autocomplete_fields = ("leg1_fixture", "leg2_fixture", "home_winner_from", "away_winner_from", "winner_team")
+    fields = ("tie_no", "leg1_fixture", "leg2_fixture", "home_seed", "away_seed", "home_winner_from", "away_winner_from", "winner_team")
+    ordering = ("tie_no",)
+
+
+@admin.register(Stage)
+class StageAdmin(admin.ModelAdmin):
+    list_display = ("name", "scope", "stage_type", "order", "start_gameweek", "end_gameweek", "show_bracket")
+    list_filter = ("stage_type", "show_bracket", "scope__season", "scope__competition__comp_type", "scope__division", "scope__group")
+    search_fields = ("name", "scope__season__name", "scope__competition__name", "scope__division__name", "scope__group__name")
+    autocomplete_fields = ("scope",)
+    list_per_page = 100
+
+
+@admin.register(Bracket)
+class BracketAdmin(admin.ModelAdmin):
+    list_display = ("__str__", "stage", "teams_count", "two_legs", "created_at")
+    list_filter = ("two_legs", "stage__scope__season", "stage__scope__competition__comp_type")
+    search_fields = ("title", "stage__name")
+    autocomplete_fields = ("stage",)
+    list_per_page = 100
+
+
+@admin.register(BracketRound)
+class BracketRoundAdmin(admin.ModelAdmin):
+    list_display = ("name", "bracket", "order")
+    list_filter = ("bracket__stage__scope__season", "bracket__stage__scope__competition__comp_type")
+    search_fields = ("name", "bracket__title", "bracket__stage__name")
+    autocomplete_fields = ("bracket",)
+    inlines = [BracketTieInline]
+    ordering = ("bracket", "order")
+    list_per_page = 100
