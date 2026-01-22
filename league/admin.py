@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from django.contrib import admin
 from django.utils import timezone
+from django.db.models import Q
 
 from .models import (
     Season, Division, Group, Competition, Scope,
@@ -209,10 +210,18 @@ class PlayerScoreInline(admin.TabularInline):
             return formset
 
         fixture = obj.fixture
-        allowed_ids = TeamMembership.objects.filter(
-            team_id__in=[fixture.home_team_id, fixture.away_team_id],
-            season_id=fixture.scope.season_id,   # مهم: فلترة الموسم
-        ).values_list("player_id", flat=True)
+        kickoff_date = fixture.kickoff_at.date()
+
+        allowed_ids = (
+            TeamMembership.objects
+            .filter(
+                team_id__in=[fixture.home_team_id, fixture.away_team_id],
+                season_id=fixture.scope.season_id,  # مهم: فلترة الموسم
+                start_date__lte=kickoff_date,
+            )
+            .filter(Q(end_date__isnull=True) | Q(end_date__gte=kickoff_date))
+            .values_list("player_id", flat=True)
+        )
 
         formset.form.base_fields["player"].queryset = (
             Player.objects.filter(id__in=allowed_ids).distinct().order_by("name")
