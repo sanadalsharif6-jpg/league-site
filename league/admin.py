@@ -109,7 +109,8 @@ class TransferAdmin(admin.ModelAdmin):
         "from_team", 
         "to_team"
          )
-    search_fields = ("player_name", "from_teamname", "to_teamname", "season_name")
+    search_fields = ("player__name", "from_team__name", "to_team__name", "season__name")
+    list_select_related = ("season", "player", "from_team", "to_team")
     date_hierarchy = "date"
     autocomplete_fields = ("season", "player", "from_team", "to_team")
     list_per_page = 100
@@ -298,7 +299,7 @@ class AchievementAdmin(admin.ModelAdmin):
         "scope__division",
         "scope__group",
     )
-    search_fields = ("team_name", "playername", "achievement_typename", "season_name")
+    search_fields = ("team__name", "player__name", "achievement_type__name", "season__name")
     date_hierarchy = "awarded_at"
     list_per_page = 100
 

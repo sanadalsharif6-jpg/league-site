@@ -40,27 +40,77 @@ def members_of_team_on_date(season: Season, team_id: int, on_date) -> list[int]:
 
 
 @transaction.atomic
+
 def apply_transfer_memberships(transfer_id: int) -> None:
-    tr = Transfer.objects.select_related("season", "player", "from_team", "to_team").get(pk=transfer_id)
+    """
+    Keep TeamMembership rows consistent after a Transfer is saved.
 
-    active = TeamMembership.objects.filter(season=tr.season, player=tr.player, end_date__isnull=True).first()
-    if active:
-        if tr.date <= active.start_date:
-            active.end_date = active.start_date
-        else:
-            active.end_date = tr.date - timedelta(days=1)
-        active.full_clean()
-        active.save()
+    The previous implementation attempted to patch only the currently-active membership.
+    That breaks when transfers are entered out-of-order (backdated) and can trigger
+    'overlapping membership' ValidationError, which then becomes a 500 in the admin.
 
-    mem = TeamMembership(
-        season=tr.season,
-        team=tr.to_team,
-        player=tr.player,
-        start_date=tr.date,
-        end_date=None,
+    This implementation rebuilds the player's memberships for the season from scratch
+    using the full transfer timeline (ordered by date).
+    """
+    tr = Transfer.objects.select_related("season", "player").get(pk=transfer_id)
+    _rebuild_player_memberships_from_transfers(season=tr.season, player=tr.player)
+
+
+def _rebuild_player_memberships_from_transfers(*, season: Season, player: Player) -> None:
+    """Rebuild memberships for a single (season, player) from Transfer history."""
+    transfers = (
+        Transfer.objects.filter(season=season, player=player)
+        .select_related("from_team", "to_team")
+        .order_by("date", "id")
     )
-    mem.full_clean()
-    mem.save()
+    # If no transfers, nothing to do.
+    if not transfers.exists():
+        return
+
+    # Remove existing memberships for this player in this season to avoid overlaps.
+    TeamMembership.objects.filter(season=season, player=player).delete()
+
+    season_start = season.start_date
+    season_end = season.end_date
+
+    transfers_list = list(transfers)
+
+    # Optional initial segment: if first transfer has from_team, assume player was in from_team from season start.
+    first = transfers_list[0]
+    if first.from_team_id:
+        start = season_start
+        # End the day before the transfer date (clamped to season start).
+        end = first.date - timedelta(days=1)
+        if end < season_start:
+            end = season_start
+        if start <= end:
+            mem = TeamMembership(season=season, team=first.from_team, player=player, start_date=start, end_date=end)
+            mem.full_clean()
+            mem.save()
+
+    # Create segments for each transfer to_team until next transfer (or open-ended)
+    for i, tr in enumerate(transfers_list):
+        start = tr.date
+        if start < season_start:
+            start = season_start
+        if start > season_end:
+            # Transfer date outside season; ignore this and later.
+            break
+
+        if i + 1 < len(transfers_list):
+            nxt = transfers_list[i + 1]
+            end = nxt.date - timedelta(days=1)
+            if end > season_end:
+                end = season_end
+            if end < start:
+                end = start
+        else:
+            end = None  # active until season end/now
+
+        mem = TeamMembership(season=season, team=tr.to_team, player=player, start_date=start, end_date=end)
+        mem.full_clean()
+        mem.save()
+
 
 
 def cup_winner_team_id(original_fixture: Fixture) -> int | None:

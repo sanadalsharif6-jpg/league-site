@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.db.models import Q
 from django.db.models.signals import post_save, post_delete
@@ -9,11 +10,37 @@ from .services import apply_transfer_memberships, recalculate_fixture_totals, re
 
 @receiver(post_save, sender=Transfer)
 def transfer_saved(sender, instance: Transfer, created: bool, **kwargs):
-    apply_transfer_memberships(instance.id)
-    # After any transfer, rebuild all scopes in the same season (safe but can be heavy if season is huge)
-    scope_ids = instance.season.scopes.values_list("id", flat=True)
+    # Always keep memberships consistent.
+    try:
+        apply_transfer_memberships(instance.id)
+    except ValidationError:
+        # Do not crash admin (500). Transfer stays saved; memberships can be rebuilt later.
+        return
+
+    # IMPORTANT: Rebuilding all materialized scope tables on every transfer can be extremely expensive
+    # (and may cause timeouts on Render). By default, we do NOT rebuild here.
+    #
+    # If you want auto-rebuild, set XL_REBUILD_SCOPES_ON_TRANSFER=True in settings/environment.
+    if not getattr(settings, "XL_REBUILD_SCOPES_ON_TRANSFER", False):
+        return
+
+    # Rebuild only scopes that actually include either the from_team or to_team fixtures (much cheaper).
+    team_ids = [tid for tid in (instance.from_team_id, instance.to_team_id) if tid]
+    if not team_ids:
+        return
+
+    scope_ids = (
+        Fixture.objects.filter(scope__season_id=instance.season_id)
+        .filter(Q(home_team_id__in=team_ids) | Q(away_team_id__in=team_ids))
+        .values_list("scope_id", flat=True)
+        .distinct()
+    )
+
     for sid in scope_ids:
         rebuild_scope_materialized(sid)
+
+
+
 
 
 def _rebuild_related_scope_by_fixture_id(fixture_id: int):
