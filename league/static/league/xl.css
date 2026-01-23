@@ -296,3 +296,21 @@
 @media (max-width: 576px){
   .xl-table td{ white-space: normal; }
 }
+
+
+.xl-logo{ width:32px; height:32px; border-radius:10px; object-fit:cover; box-shadow: 0 6px 18px rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.16); }
+.xl-date{ color: rgba(255,255,255,.78) !important; }
+.xl-table td, .xl-table th{ vertical-align: middle; }
+.xl-table a{ color: rgba(255,255,255,.90); }
+.xl-table a:hover{ color: rgba(255,255,255,1); }
+
+@media (max-width: 576px){
+  .container{ padding-left: 14px; padding-right: 14px; }
+  .xl-hero{ padding: 18px !important; }
+  .xl-filterbar .row.g-3 > [class*="col-"]{ width: 100%; }
+  .table-responsive{ border: 1px solid rgba(255,255,255,.10); border-radius: 14px; }
+  .xl-table th, .xl-table td{ font-size: 0.88rem; }
+  .xl-table td.text-nowrap{ white-space: normal !important; }
+  .xl-nav .navbar-brand{ max-width: 75%; }
+  .xl-nav .navbar-brand span.fw-semibold{ display:inline-block; line-height:1.1; }
+}

@@ -106,7 +106,7 @@
             <tbody>
               {% for f in gwb.fixtures %}
                 <tr>
-                  <td class="text-nowrap small text-muted">{{ f.kickoff_at|date:"Y-m-d H:i" }}</td>
+                  <td class="text-nowrap small xl-date">{{ f.kickoff_at|date:"Y-m-d H:i" }}</td>
                   <td>
                     <div class="d-flex align-items-center gap-2 flex-wrap">
                       <a class="text-decoration-none" href="{% url 'league:team_detail' f.home_team.id %}">{{ f.home_team.name }}</a>

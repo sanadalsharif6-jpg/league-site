@@ -53,6 +53,11 @@ def _active_season_competition(request):
 
 
 def home(request):
+    # Default landing: standings (better than dashboard)
+    from django.shortcuts import redirect
+    return redirect('league:standings')
+
+    
     season, comp, seasons, competitions = _active_season_competition(request)
 
     scopes = []
