@@ -79,7 +79,7 @@
 
 {% if result %}
   <h2>Summary</h2>
-  <table>
+  <div class="table-responsive"><table>
     <tr>
       <th></th>
       <th>{{ a_obj.name }}</th>
@@ -105,7 +105,7 @@
       <td>{{ result.a.best_match_points }}</td>
       <td>{{ result.b.best_match_points }}</td>
     </tr>
-  </table>
+  </table></div>
 
   <h2 style="margin-top:16px;">Last 5</h2>
   <div class="muted">{{ a_obj.name }}: {{ result.a_last5 }}</div>

@@ -299,7 +299,7 @@
 
 
 .xl-logo{ width:32px; height:32px; border-radius:10px; object-fit:cover; box-shadow: 0 6px 18px rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.16); }
-.xl-date{ color: rgba(255,255,255,.78) !important; }
+.xl-date{ color: rgba(255,255,255,.92) !important; }
 .xl-table td, .xl-table th{ vertical-align: middle; }
 .xl-table a{ color: rgba(255,255,255,.90); }
 .xl-table a:hover{ color: rgba(255,255,255,1); }
@@ -313,4 +313,19 @@
   .xl-table td.text-nowrap{ white-space: normal !important; }
   .xl-nav .navbar-brand{ max-width: 75%; }
   .xl-nav .navbar-brand span.fw-semibold{ display:inline-block; line-height:1.1; }
+}
+
+/* XL MOBILE FIXES */
+@media (max-width: 576px){
+  .container{ padding-left: 12px; padding-right: 12px; }
+  .xl-filterbar{ padding: 12px; }
+  .xl-filterbar .row{ --bs-gutter-x: .5rem; --bs-gutter-y: .5rem; }
+  .xl-card .card-header{ padding: 12px 12px; }
+  .xl-card .card-body{ padding: 12px; }
+  .xl-table{ font-size: .88rem; }
+  .xl-table th, .xl-table td{ padding: .45rem .5rem; }
+  .xl-table th.text-nowrap, .xl-table td.text-nowrap{ white-space: nowrap; }
+  .xl-logo{ width:28px; height:28px; border-radius:10px; }
+  .navbar-brand span{ font-size: .95rem; }
+  .xl-pill{ margin-top: 6px; }
 }

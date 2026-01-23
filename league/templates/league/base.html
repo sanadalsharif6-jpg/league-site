@@ -20,7 +20,7 @@
   <nav class="navbar navbar-expand-lg navbar-dark xl-nav sticky-top">
     <div class="container">
       <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'league:home' %}">
-        <img src="{% static 'league/img/xl_logo.jpeg' %}" alt="Xl" class="xl-logo" />
+        <img src="{% static 'league/img/xl_league_logo.png' %}" alt="Xl" class="xl-logo" />
         <span class="fw-semibold">Xl LIBYAN FANTASY</span>
       </a>
 
@@ -41,10 +41,11 @@
             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Tools</a>
             <ul class="dropdown-menu dropdown-menu-end">
               <li><a class="dropdown-item" href="{% url 'league:compare_players' %}">Compare Players</a></li>
+              <li><a class="dropdown-item" href="{% url 'league:compare_teams' %}">Compare Teams</a></li>
+
           <li class="nav-item"><a class="nav-link" href="{% url 'league:teams' %}">Teams</a></li>
         </ul>
           </li>
-
         </ul>
       </div>
     </div>

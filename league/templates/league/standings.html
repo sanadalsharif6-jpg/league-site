@@ -127,7 +127,7 @@
       </h2>
 
       {% if block.rows %}
-        <table class="standings">
+        <div class="table-responsive"><table class="standings">
           <thead>
             <tr>
               <th class="rank">#</th>
@@ -168,7 +168,7 @@
               </tr>
             {% endfor %}
           </tbody>
-        </table>
+        </table></div>
       {% else %}
         <p class="muted">No standings data for this scope yet.</p>
       {% endif %}
