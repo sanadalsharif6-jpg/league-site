@@ -24,7 +24,7 @@ from .services import rebuild_scope_materialized
 @admin.register(Season)
 class SeasonAdmin(admin.ModelAdmin):
     list_display = ("name", "start_date", "end_date")
-    search_fields = ("name",)
+        search_fields = ("player__name", "from_team__name", "to_team__name", "season__name")
     ordering = ("-start_date",)
 
 

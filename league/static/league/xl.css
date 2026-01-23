@@ -329,3 +329,20 @@
   .navbar-brand span{ font-size: .95rem; }
   .xl-pill{ margin-top: 6px; }
 }
+
+
+
+/* Readability fixes */
+.xl-card .card-header{
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid var(--xl-border);
+  color: var(--xl-text);
+}
+.xl-card .card-header .text-muted{ color: var(--xl-muted) !important; }
+
+/* Tables: prevent overlap on mobile */
+.table-responsive{ -webkit-overflow-scrolling: touch; }
+@media (max-width: 576px){
+  .xl-table{ font-size: 0.80rem; }
+  .xl-table th, .xl-table td{ padding: .4rem .5rem; white-space: nowrap; }
+}
