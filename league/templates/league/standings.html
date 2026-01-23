@@ -1,5 +1,5 @@
 {% extends "league/base.html" %}
-    {% block title %}Standings | Xl LIBYAN FANTASY{% endblock %}
+    {% block title %}Standings | XL - LIBYAN FANTASY{% endblock %}
     {% block content %}
     {# league/templates/league/standings.html #}
 
@@ -127,7 +127,7 @@
       </h2>
 
       {% if block.rows %}
-        <div class="table-responsive"><table class="standings">
+        <table class="standings">
           <thead>
             <tr>
               <th class="rank">#</th>
@@ -168,7 +168,7 @@
               </tr>
             {% endfor %}
           </tbody>
-        </table></div>
+        </table>
       {% else %}
         <p class="muted">No standings data for this scope yet.</p>
       {% endif %}

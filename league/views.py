@@ -1,5 +1,4 @@
 from __future__ import annotations
-from datetime import datetime
 from django.db.models import Q
 from django.db import models
 from django.db.models import Sum, Count, Q
@@ -54,11 +53,6 @@ def _active_season_competition(request):
 
 
 def home(request):
-    # Default landing: standings (better than dashboard)
-    from django.shortcuts import redirect
-    return redirect('league:standings')
-
-    
     season, comp, seasons, competitions = _active_season_competition(request)
 
     scopes = []
@@ -167,8 +161,6 @@ def players_list(request):
     if season and comp:
         scopes = list(Scope.objects.filter(season=season, competition=comp).order_by("division__order", "group__order"))
 
-    all_scopes = list(scopes)
-
 
     scope_id = request.GET.get("scope")
     selected_scope = None
@@ -197,10 +189,10 @@ def players_list(request):
             rows.append({
                 "player": row.player,
                 "team": team,
-                "matches": row.matches_played,
                 "total_points": row.total_points,
-                "best_points": row.best_match_points,
-                "avg_points": row.average_points,
+                "matches_played": row.matches_played,
+                "best_match_points": row.best_match_points,
+                "average_points": row.average_points,
             })
         by_scope.append({"scope": sc, "rows": rows})
 
@@ -210,8 +202,6 @@ def players_list(request):
         "seasons": seasons,
         "competitions": competitions,
         "players_by_scope": by_scope,
-        "all_scopes": all_scopes,
-        "selected_scope": selected_scope,
     }
     return render(request, "league/players.html", context)
 
@@ -259,96 +249,29 @@ def player_detail(request, player_id: int):
 def fixtures_view(request):
     season, comp, seasons, competitions = _active_season_competition(request)
 
-    scopes_qs = Scope.objects.none()
+    scopes = []
     if season and comp:
-        scopes_qs = (
+        scopes = list(
             Scope.objects.filter(season=season, competition=comp)
             .select_related("division", "group")
             .order_by("division__order", "group__order")
         )
 
-    scopes = list(scopes_qs)
-
-    # -------------------------
-    # Filters (Scope / Team / Status / Query / Date range)
-    # -------------------------
-    selected_scope_id = request.GET.get("scope") or ""
-    selected_team_id = request.GET.get("team") or ""
-    status = request.GET.get("status") or "all"  # all | played | upcoming
-    q = (request.GET.get("q") or "").strip()
-    date_from = request.GET.get("from") or ""
-    date_to = request.GET.get("to") or ""
-
-    base_fx = Fixture.objects.none()
-    if scopes:
-        base_fx = (
-            Fixture.objects.filter(scope__in=scopes_qs)
-            .select_related("scope", "scope__division", "scope__group", "home_team", "away_team", "result")
-            .order_by("kickoff_at")
-        )
-
-    if selected_scope_id:
-        base_fx = base_fx.filter(scope_id=int(selected_scope_id))
-
-    if selected_team_id:
-        tid = int(selected_team_id)
-        base_fx = base_fx.filter(models.Q(home_team_id=tid) | models.Q(away_team_id=tid))
-
-    if status == "played":
-        base_fx = base_fx.filter(is_played=True)
-    elif status == "upcoming":
-        base_fx = base_fx.filter(is_played=False)
-
-    if q:
-        base_fx = base_fx.filter(
-            models.Q(home_team__name__icontains=q)
-            | models.Q(away_team__name__icontains=q)
-        )
-
-    # Date range (YYYY-MM-DD)
-    def _parse(d: str):
-        try:
-            return datetime.strptime(d, "%Y-%m-%d")
-        except Exception:
-            return None
-
-    df = _parse(date_from) if date_from else None
-    dt = _parse(date_to) if date_to else None
-    if df:
-        base_fx = base_fx.filter(kickoff_at__date__gte=df.date())
-    if dt:
-        base_fx = base_fx.filter(kickoff_at__date__lte=dt.date())
-
-    # Teams list for filter dropdown (limited to this season+competition scopes)
-    team_ids = set(base_fx.values_list("home_team_id", flat=True)) | set(base_fx.values_list("away_team_id", flat=True))
-    teams = Team.objects.filter(id__in=team_ids).order_by("name") if team_ids else Team.objects.none()
-
-    # Group fixtures by scope then by gameweek for display
     data = []
-    scopes_for_display = scopes
-    if selected_scope_id:
-        scopes_for_display = [sc for sc in scopes if str(sc.id) == str(selected_scope_id)]
-
-    for sc in scopes_for_display:
-        fx_sc = list(base_fx.filter(scope=sc))
-        if not fx_sc:
-            data.append({"scope": sc, "gameweeks": []})
-            continue
-
-        # gameweeks present in filtered fixtures
-        gw_ids = sorted({f.gameweek_id for f in fx_sc if f.gameweek_id})
-        gws = list(Gameweek.objects.filter(id__in=gw_ids).order_by("number", "id"))
-
+    for sc in scopes:
+        gws = list(
+    Gameweek.objects.filter(fixtures__scope=sc)
+    .distinct()
+    .order_by("number", "id")
+        ) 
         gw_blocks = []
         for gw in gws:
-            gw_fx = [f for f in fx_sc if f.gameweek_id == gw.id]
-            gw_blocks.append({"gw": gw, "fixtures": gw_fx})
-
-        # fixtures without gameweek (safety)
-        no_gw = [f for f in fx_sc if not f.gameweek_id]
-        if no_gw:
-            gw_blocks.insert(0, {"gw": None, "fixtures": no_gw})
-
+            fx = list(
+                Fixture.objects.filter(scope=sc, gameweek=gw)
+                .select_related("home_team", "away_team")
+                .order_by("kickoff_at")
+            )
+            gw_blocks.append({"gw": gw, "fixtures": fx})
         data.append({"scope": sc, "gameweeks": gw_blocks})
 
     context = {
@@ -356,17 +279,7 @@ def fixtures_view(request):
         "competition": comp,
         "seasons": seasons,
         "competitions": competitions,
-        "scopes": scopes,
-        "teams": teams,
         "fixtures_by_scope": data,
-        "filters": {
-            "scope": selected_scope_id,
-            "team": selected_team_id,
-            "status": status,
-            "q": q,
-            "from": date_from,
-            "to": date_to,
-        },
     }
     return render(request, "league/fixtures.html", context)
 
@@ -408,8 +321,6 @@ def compare_teams(request):
     if season and comp:
         scopes = list(Scope.objects.filter(season=season, competition=comp).order_by("division__order", "group__order"))
 
-    all_scopes = list(scopes)
-
     active_scope = Scope.objects.filter(id=scope_id).first() if scope_id else (scopes[0] if scopes else None)
 
     res = None
@@ -439,8 +350,6 @@ def compare_players(request):
     scopes = []
     if season and comp:
         scopes = list(Scope.objects.filter(season=season, competition=comp).order_by("division__order", "group__order"))
-
-    all_scopes = list(scopes)
 
     active_scope = Scope.objects.filter(id=scope_id).first() if scope_id else (scopes[0] if scopes else None)
 

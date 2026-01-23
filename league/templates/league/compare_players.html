@@ -1,5 +1,5 @@
 {% extends "league/base.html" %}
-    {% block title %}Compare Players | Xl LIBYAN FANTASY{% endblock %}
+    {% block title %}Compare Players | XL - LIBYAN FANTASY{% endblock %}
     {% block content %}
     <h1>Compare Players</h1>
 
@@ -79,7 +79,7 @@
 
 {% if result %}
   <h2>Summary</h2>
-  <div class="table-responsive"><table>
+  <table>
     <tr>
       <th></th>
       <th>{{ a_obj.name }}</th>
@@ -105,7 +105,7 @@
       <td>{{ result.a.best_match_points }}</td>
       <td>{{ result.b.best_match_points }}</td>
     </tr>
-  </table></div>
+  </table>
 
   <h2 style="margin-top:16px;">Last 5</h2>
   <div class="muted">{{ a_obj.name }}: {{ result.a_last5 }}</div>

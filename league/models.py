@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from django.db import models
-from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
@@ -338,64 +337,61 @@ class Achievement(models.Model):
         owner = self.player or self.team
         return f"{self.achievement_type} - {owner} ({self.season})"
 
-
     def clean(self):
-        # Must have at least one owner: team or player
-        if self.team is None and self.player is None:
-            raise ValidationError("Achievement must have an owner: team and/or player.")
+        # 1) Must belong to exactly one: team OR player
+        if (self.team is None) == (self.player is None):
+            raise ValidationError("Achievement must belong to exactly one: team OR player.")
 
-        # Enforce type applicability
+        # 2) Respect type applicability
+        if self.team and not self.achievement_type.is_team:
+            raise ValidationError("This achievement type is not allowed for teams.")
         if self.player and not self.achievement_type.is_player:
             raise ValidationError("This achievement type is not allowed for players.")
-        if (self.player is None) and self.team and not self.achievement_type.is_team:
-            # Team-only validation (if player exists, team is treated as context and not required by type)
-            raise ValidationError("This achievement type is not allowed for teams.")
 
-        # Scope season must match achievement season
+        # 3) Scope season must match achievement season
         if self.scope and self.scope.season_id != self.season_id:
             raise ValidationError("Achievement scope season must match achievement season.")
 
-        # If fixture provided: validate season/scope alignment
+        # 4) If player award: team is REQUIRED (باش نقدر نطلع شعار الفريق واسم الفريق دايمًا)
+        if self.player and self.team is None:
+            raise ValidationError("Player achievements must have a team selected.")
+
+        # 5) Fixture validation (if provided)
         if self.fixture:
+            # fixture scope season must match achievement season
             if self.fixture.scope.season_id != self.season_id:
                 raise ValidationError("Achievement fixture must be within the same season.")
+
+            # if achievement has scope, fixture must be within same scope
             if self.scope and self.fixture.scope_id != self.scope_id:
                 raise ValidationError("Achievement fixture must belong to the same scope as the achievement scope.")
 
-        # Auto-fill team for player awards (recommended). We derive team based on:
-        # - fixture kickoff date if fixture exists, otherwise awarded_at date.
-        if self.player and self.team is None:
-            on_date = None
-            if self.fixture and self.fixture.kickoff:
-                on_date = self.fixture.kickoff.date()
-            else:
-                on_date = self.awarded_at.date() if self.awarded_at else timezone.now().date()
-
-            mem = (
-                TeamMembership.objects.filter(season_id=self.season_id, player_id=self.player_id, start_date__lte=on_date)
-                .filter(Q(end_date__isnull=True) | Q(end_date__gte=on_date))
-                .select_related("team")
-                .first()
-            )
-            if mem:
-                self.team = mem.team
-
-        # If team is set and fixture exists, ensure team is one of fixture teams
-        if self.fixture and self.team_id:
-            if self.team_id not in (self.fixture.home_team_id, self.fixture.away_team_id):
+            # if player/team selected, the team must be one of fixture teams
+            if self.team_id and self.team_id not in (self.fixture.home_team_id, self.fixture.away_team_id):
                 raise ValidationError("Selected team must be either the home or away team of the fixture.")
 
-        # Opponent rules
+        # 6) Opponent rules:
+        # - opponent_player alone is allowed
+        # - opponent_team alone is allowed
+        # - both allowed
+        # - but if fixture exists and opponent_team is set, it must be the other team
         if self.fixture and self.opponent_team_id:
             if self.team_id and self.opponent_team_id == self.team_id:
                 raise ValidationError("Opponent team cannot be the same as the award team.")
             if self.opponent_team_id not in (self.fixture.home_team_id, self.fixture.away_team_id):
                 raise ValidationError("Opponent team must be one of the fixture teams.")
+
+            # ensure it's the other side (if team is set)
             if self.team_id:
+                # award team is home -> opponent must be away, etc.
                 if self.team_id == self.fixture.home_team_id and self.opponent_team_id != self.fixture.away_team_id:
                     raise ValidationError("Opponent team must be the other team in the fixture.")
                 if self.team_id == self.fixture.away_team_id and self.opponent_team_id != self.fixture.home_team_id:
                     raise ValidationError("Opponent team must be the other team in the fixture.")
+
+        # 7) Prevent nonsense: opponent_player cannot be the same as award player
+        if self.player_id and self.opponent_player_id and self.player_id == self.opponent_player_id:
+            raise ValidationError("Opponent player cannot be the same as the award player.")
 
 class TeamStanding(models.Model):
     scope = models.ForeignKey(Scope, on_delete=models.CASCADE, related_name="team_standings")
