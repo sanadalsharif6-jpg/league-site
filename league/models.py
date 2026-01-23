@@ -186,7 +186,6 @@ class Gameweek(models.Model):
 
 class Fixture(models.Model):
     scope = models.ForeignKey(Scope, on_delete=models.CASCADE, related_name="fixtures")
-    stage = models.ForeignKey('Stage', on_delete=models.SET_NULL, null=True, blank=True, related_name='fixtures')
     gameweek = models.ForeignKey(Gameweek, on_delete=models.CASCADE, related_name="fixtures")
     kickoff_at = models.DateTimeField()
 
@@ -489,89 +488,3 @@ class HallOfFameEntry(models.Model):
 
     def __str__(self) -> str:
         return f"HOF: {self.player} ({self.season})"
-
-# =========================
-# Playoffs / Knockout Stages
-# =========================
-
-class Stage(models.Model):
-    REGULAR = "REGULAR"
-    KNOCKOUT = "KNOCKOUT"
-    STAGE_TYPES = [(REGULAR, "Regular"), (KNOCKOUT, "Knockout")]
-
-    scope = models.ForeignKey(Scope, on_delete=models.CASCADE, related_name="stages")
-    name = models.CharField(max_length=80)
-    stage_type = models.CharField(max_length=20, choices=STAGE_TYPES)
-    # Regular season: optional GW range (e.g., 1-30)
-    start_gameweek = models.PositiveIntegerField(null=True, blank=True)
-    end_gameweek = models.PositiveIntegerField(null=True, blank=True)
-    # Knockout: show bracket UI or just list fixtures
-    show_bracket = models.BooleanField(default=False)
-    order = models.PositiveIntegerField(default=1)
-
-    class Meta:
-        unique_together = [("scope", "name")]
-        ordering = ["order", "id"]
-
-    def __str__(self) -> str:
-        return f"{self.scope} | {self.name}"
-
-
-class Bracket(models.Model):
-    stage = models.OneToOneField(Stage, on_delete=models.CASCADE, related_name="bracket")
-    title = models.CharField(max_length=120, blank=True, default="")
-    teams_count = models.PositiveIntegerField(default=16)
-    two_legs = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self) -> str:
-        return f"Bracket: {self.stage}"
-
-
-class BracketRound(models.Model):
-    bracket = models.ForeignKey(Bracket, on_delete=models.CASCADE, related_name="rounds")
-    name = models.CharField(max_length=60)  # R16, QF, SF, 3rd, Final...
-    order = models.PositiveIntegerField(default=1)
-
-    class Meta:
-        unique_together = [("bracket", "order")]
-        ordering = ["bracket", "order"]
-
-    def __str__(self) -> str:
-        return f"{self.bracket.stage} | {self.name}"
-
-
-class BracketTie(models.Model):
-    round = models.ForeignKey(BracketRound, on_delete=models.CASCADE, related_name="ties")
-    tie_no = models.PositiveIntegerField(default=1)
-
-    # Real fixtures (leg1 required; leg2 optional)
-    leg1_fixture = models.OneToOneField(Fixture, on_delete=models.PROTECT, related_name="bracket_leg1")
-    leg2_fixture = models.OneToOneField(Fixture, on_delete=models.PROTECT, related_name="bracket_leg2", null=True, blank=True)
-
-    # Winner advancement (optional)
-    home_from_tie = models.ForeignKey("self", on_delete=models.SET_NULL, null=True, blank=True, related_name="home_to")
-    away_from_tie = models.ForeignKey("self", on_delete=models.SET_NULL, null=True, blank=True, related_name="away_to")
-
-    class Meta:
-        unique_together = [("round", "tie_no")]
-        ordering = ["round__order", "tie_no"]
-
-    def __str__(self) -> str:
-        return f"{self.round} | T{self.tie_no}"
-
-    def aggregate_home_points(self) -> int:
-        total = 0
-        if hasattr(self.leg1_fixture, "result") and self.leg1_fixture.result:
-            total += self.leg1_fixture.home_total_points
-        if self.leg2_fixture and hasattr(self.leg2_fixture, "result") and self.leg2_fixture.result:
-            total += self.leg2_fixture.home_total_points
-        return total
-
-    def aggregate_away_points(self) -> int:
-        total = 0
-        if hasattr(self.leg1_fixture, "result") and self.leg1_fixture.result:
-            total += self.leg1_fixture.away_total_points
-        if self.leg2_fixture and hasattr(self.leg2_fixture, "result") and self.leg2_fixture.result:
-            total += self.leg2_fixture.away_total_points
-        return total
