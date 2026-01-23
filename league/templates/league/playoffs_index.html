@@ -1,0 +1,33 @@
+{% extends "league/base.html" %}
+{% block title %}Playoffs | Xl LIBYAN FANTASY{% endblock %}
+{% block content %}
+<div class="xl-hero">
+  <div class="xl-hero__inner">
+    <div>
+      <h1 class="xl-title">Playoffs</h1>
+      <p class="xl-subtitle">Knockout stages for {{ season.name }}</p>
+    </div>
+  </div>
+</div>
+
+<div class="xl-card mt-4">
+  <div class="xl-card__body">
+    <div class="xl-grid">
+      {% for st in stages %}
+        <a class="xl-stage" href="{% url 'league:stage_detail' st.id %}">
+          <div class="xl-stage__top">
+            <div class="xl-chip">{{ st.scope.competition.name }}</div>
+            <div class="xl-chip">{{ st.scope.division.name }} · {{ st.scope.group.name }}</div>
+          </div>
+          <div class="xl-stage__name">{{ st.name }}</div>
+          <div class="xl-stage__meta">
+            {% if st.show_bracket %}Bracket view{% else %}List view{% endif %}
+          </div>
+        </a>
+      {% empty %}
+        <div class="muted">No knockout stages created yet.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

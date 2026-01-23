@@ -1,103 +1,145 @@
 {% extends "league/base.html" %}
 {% block title %}Fixtures{% endblock %}
 {% block content %}
-<h2>Fixtures</h2>
 
-<div class="card">
-  <form method="get" class="filterbar">
-    <div class="field">
-      <label>Table / Group</label>
-      <select name="scope">
-        <option value="">All</option>
-        {% for sc in all_scopes %}
-          <option value="{{ sc.id }}" {% if filters.scope|default:'' == sc.id|stringformat:"s" %}selected{% endif %}>
+<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+  <div>
+    <h2 class="mb-0">Fixtures</h2>
+    <div class="text-muted small">Filter by table, team, status, or date range.</div>
+  </div>
+</div>
+
+<form method="get" class="xl-filterbar card card-body mb-4">
+  <div class="row g-3 align-items-end">
+    <div class="col-12 col-lg-3">
+      <label class="form-label">Table</label>
+      <select class="form-select" name="scope">
+        <option value="">All tables</option>
+        {% for sc in scopes %}
+          <option value="{{ sc.id }}" {% if filters.scope|stringformat:"s" == sc.id|stringformat:"s" %}selected{% endif %}>
             {{ sc.division.name }} — {{ sc.group.name }}
           </option>
         {% endfor %}
       </select>
     </div>
 
-    <div class="field">
-      <label>Team</label>
-      <select name="team">
-        <option value="">All</option>
-        {% for t in teams_for_filter %}
-          <option value="{{ t.id }}" {% if filters.team|default:'' == t.id|stringformat:"s" %}selected{% endif %}>{{ t.name }}</option>
+    <div class="col-12 col-lg-3">
+      <label class="form-label">Team</label>
+      <select class="form-select" name="team">
+        <option value="">All teams</option>
+        {% for t in teams %}
+          <option value="{{ t.id }}" {% if filters.team|stringformat:"s" == t.id|stringformat:"s" %}selected{% endif %}>{{ t.name }}</option>
         {% endfor %}
       </select>
     </div>
 
-    <div class="field">
-      <label>Status</label>
-      <select name="status">
-        <option value="" {% if not filters.status %}selected{% endif %}>All</option>
+    <div class="col-12 col-lg-2">
+      <label class="form-label">Status</label>
+      <select class="form-select" name="status">
+        <option value="all" {% if filters.status == "all" %}selected{% endif %}>All</option>
         <option value="played" {% if filters.status == "played" %}selected{% endif %}>Played</option>
         <option value="upcoming" {% if filters.status == "upcoming" %}selected{% endif %}>Upcoming</option>
       </select>
     </div>
 
-    <div class="field">
-      <label>From</label>
-      <input type="date" name="date_from" value="{{ filters.date_from }}">
+    <div class="col-12 col-lg-2">
+      <label class="form-label">From</label>
+      <input class="form-control" type="date" name="from" value="{{ filters.from }}">
     </div>
 
-    <div class="field">
-      <label>To</label>
-      <input type="date" name="date_to" value="{{ filters.date_to }}">
+    <div class="col-12 col-lg-2">
+      <label class="form-label">To</label>
+      <input class="form-control" type="date" name="to" value="{{ filters.to }}">
     </div>
 
-    <div class="field" style="min-width:220px;flex:1">
-      <label>Search</label>
-      <input type="text" name="q" placeholder="Team name..." value="{{ filters.q }}">
+    <div class="col-12 col-lg-4">
+      <label class="form-label">Search</label>
+      <input class="form-control" name="q" placeholder="Type a team name…" value="{{ filters.q }}">
     </div>
 
-    <button type="submit">Apply</button>
-  </form>
-</div>
+    <div class="col-12 col-lg-2 d-grid">
+      <button class="btn btn-primary xl-btn" type="submit">Apply</button>
+    </div>
+
+    <div class="col-12 col-lg-2 d-grid">
+      <a class="btn btn-outline-secondary" href="{% url 'league:fixtures' %}">Reset</a>
+    </div>
+  </div>
+</form>
+
+{% if not fixtures_by_scope %}
+  <p class="text-muted">No fixtures.</p>
+{% endif %}
 
 {% for block in fixtures_by_scope %}
-  <div class="scope-box">
-    <h3>{{ block.scope.division.name }} — {{ block.scope.group.name }}</h3>
+  <div class="card xl-card mb-4">
+    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div class="fw-semibold">
+        {{ block.scope.division.name }} — {{ block.scope.group.name }}
+      </div>
+      <div class="text-muted small">Table ID: {{ block.scope.id }}</div>
+    </div>
 
-    {% for gwb in block.gameweeks %}
-      <h4>GW{{ gwb.gw.number }} {% if gwb.gw.name %}- {{ gwb.gw.name }}{% endif %}</h4>
-      {% if not gwb.fixtures %}
-        <p class="muted">No fixtures.</p>
-      {% else %}
-        <div class="table-wrap"><table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Match</th>
-              <th>Score</th>
-              <th>Match Pts</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for f in gwb.fixtures %}
-              <tr>
-                <td class="date">{{ f.kickoff_at|date:"Y-m-d H:i" }}</td>
-                <td>
-                  {% if f.home_team.logo %}<img class="logo" src="{{ f.home_team.logo.url }}" alt="">{% endif %}
-                  {{ f.home_team.name }}
-                  vs
-                  {% if f.away_team.logo %}<img class="logo" src="{{ f.away_team.logo.url }}" alt="">{% endif %}
-                  {{ f.away_team.name }}
-                </td>
-                <td>
-                  {% if f.is_played %}
-                    <b>{{ f.home_total_points }}</b> - <b>{{ f.away_total_points }}</b>
-                  {% else %}
-                    <span class="muted">—</span>
-                  {% endif %}
-                </td>
-                <td class="muted">{{ f.home_match_points }} - {{ f.away_match_points }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table></div>
+    <div class="card-body">
+      {% if not block.gameweeks %}
+        <p class="text-muted mb-0">No fixtures match your filters.</p>
       {% endif %}
-    {% endfor %}
+
+      {% for gwb in block.gameweeks %}
+        <div class="d-flex align-items-center justify-content-between mt-3 mb-2">
+          <h6 class="mb-0">
+            {% if gwb.gw %}GW{{ gwb.gw.number }}{% else %}Other{% endif %}
+            {% if gwb.gw and gwb.gw.name %}<span class="text-muted">— {{ gwb.gw.name }}</span>{% endif %}
+          </h6>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle xl-table">
+            <thead>
+              <tr>
+                <th class="text-nowrap">Date</th>
+                <th>Match</th>
+                <th class="text-nowrap">Score</th>
+                <th class="text-nowrap">Match Pts</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for f in gwb.fixtures %}
+                <tr>
+                  <td class="text-nowrap small xl-date fw-semibold">{{ f.kickoff_at|date:"Y-m-d H:i" }}</td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                      <a class="text-decoration-none" href="{% url 'league:team_detail' f.home_team.id %}">{{ f.home_team.name }}</a>
+                      <span class="text-muted">vs</span>
+                      <a class="text-decoration-none" href="{% url 'league:team_detail' f.away_team.id %}">{{ f.away_team.name }}</a>
+                      {% if f.is_played %}
+                        <span class="badge text-bg-success ms-2">Played</span>
+                      {% else %}
+                        <span class="badge text-bg-secondary ms-2">Upcoming</span>
+                      {% endif %}
+                    </div>
+                  </td>
+                  <td class="text-nowrap">
+                    {% if f.result %}
+                      <span class="fw-semibold">{{ f.home_total_points }}</span> - <span class="fw-semibold">{{ f.away_total_points }}</span>
+                    {% else %}
+                      <span class="text-muted">—</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-nowrap">
+                    <span class="badge xl-badge">{{ f.home_match_points }}</span>
+                    <span class="text-muted mx-1">:</span>
+                    <span class="badge xl-badge">{{ f.away_match_points }}</span>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="4" class="text-muted">No fixtures.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endfor %}
+    </div>
   </div>
 {% endfor %}
 

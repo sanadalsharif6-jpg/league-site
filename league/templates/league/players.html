@@ -1,60 +1,95 @@
 {% extends "league/base.html" %}
 {% block title %}Players{% endblock %}
 {% block content %}
-<h2>Players Standings</h2>
 
-{% if not players_by_scope %}
-  <p class="muted">No scopes selected.</p>
-{% endif %}
+<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+  <div>
+    <h2 class="mb-0">Players Standings</h2>
+    <div class="text-muted small">Select a table to avoid scrolling.</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{% url 'league:compare_players' %}">Compare Players</a>
+  </div>
+</div>
+
+<form method="get" class="xl-filterbar card card-body mb-4">
+  <div class="row g-3 align-items-end">
+    <div class="col-12 col-lg-5">
+      <label class="form-label">Table</label>
+      <select class="form-select" name="scope">
+        <option value="">All tables</option>
+        {% for sc in all_scopes %}
+          <option value="{{ sc.id }}" {% if selected_scope and selected_scope.id == sc.id %}selected{% endif %}>
+            {{ sc.division.name }} — {{ sc.group.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-lg-2 d-grid">
+      <button class="btn btn-primary xl-btn" type="submit">Apply</button>
+    </div>
+    <div class="col-12 col-lg-2 d-grid">
+      <a class="btn btn-outline-secondary" href="{% url 'league:players' %}">Reset</a>
+    </div>
+  </div>
+</form>
 
 {% for block in players_by_scope %}
-  <div class="scope-box">
-    <h3>{{ block.scope.division.name }} — {{ block.scope.group.name }}</h3>
+  <div class="card xl-card mb-4">
+    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div class="fw-semibold">{{ block.scope.division.name }} — {{ block.scope.group.name }}</div>
+      <div class="text-muted small">Players: {{ block.rows|length }}</div>
+    </div>
 
-    {% if not block.rows %}
-      <p class="muted">No player standings yet for this scope.</p>
-    {% else %}
-      <div class="table-wrap"><table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Player</th>
-            <th>Team</th>
-            <th>Matches</th>
-            <th>Total</th>
-            <th>Best</th>
-            <th>Avg</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in block.rows %}
-            <tr>
-              <td>{{ forloop.counter }}</td>
-              <td>
-                <a href="{% url 'league:player_detail' r.player.id %}">
-                  {% if r.player.photo %}
-                    <img class="photo" src="{{ r.player.photo.url }}" alt="">
-                  {% endif %}
-                  {{ r.player.name }}
-                </a>
-              </td>
-              <td>
-                {% if r.team %}
-                  {% if r.team.logo %}<img class="logo" src="{{ r.team.logo.url }}" alt="">{% endif %}
-                  {{ r.team.name }}
-                {% else %}
-                  <span class="muted">—</span>
-                {% endif %}
-              </td>
-              <td>{{ r.matches_played }}</td>
-              <td><b>{{ r.total_points }}</b></td>
-              <td>{{ r.best_match_points }}</td>
-              <td>{{ r.average_points|floatformat:2 }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table></div>
-    {% endif %}
+    <div class="card-body">
+      {% if not block.rows %}
+        <p class="text-muted mb-0">No player standings yet for this table.</p>
+      {% else %}
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle xl-table">
+            <thead>
+              <tr>
+                <th class="text-nowrap">#</th>
+                <th>Player</th>
+                <th>Team</th>
+                <th class="text-nowrap">Matches</th>
+                <th class="text-nowrap">Total</th>
+                <th class="text-nowrap">Best</th>
+                <th class="text-nowrap">Avg</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in block.rows %}
+                <tr>
+                  <td class="text-nowrap fw-semibold">{{ forloop.counter }}</td>
+                  <td>
+                    <a class="d-flex align-items-center gap-2 text-decoration-none" href="{% url 'league:player_detail' r.player.id %}">
+                      {% if r.player.photo %}
+                        <img class="xl-avatar" src="{{ r.player.photo.url }}" alt="">
+                      {% else %}
+                        <span class="xl-avatar xl-avatar-placeholder"></span>
+                      {% endif %}
+                      <span>{{ r.player.name }}</span>
+                    </a>
+                  </td>
+                  <td>
+                    {% if r.team %}
+                      <a class="text-decoration-none" href="{% url 'league:team_detail' r.team.id %}">{{ r.team.name }}</a>
+                    {% else %}
+                      <span class="text-muted">—</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-nowrap">{{ r.matches }}</td>
+                  <td class="text-nowrap fw-semibold">{{ r.total_points }}</td>
+                  <td class="text-nowrap">{{ r.best_points }}</td>
+                  <td class="text-nowrap">{{ r.avg_points|floatformat:2 }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </div>
   </div>
 {% endfor %}
 
