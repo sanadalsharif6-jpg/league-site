@@ -24,7 +24,7 @@ from .services import rebuild_scope_materialized
 @admin.register(Season)
 class SeasonAdmin(admin.ModelAdmin):
     list_display = ("name", "start_date", "end_date")
-        search_fields = ("player__name", "from_team__name", "to_team__name", "season__name")
+    search_fields = ("name",)
     ordering = ("-start_date",)
 
 
@@ -109,7 +109,8 @@ class TransferAdmin(admin.ModelAdmin):
         "from_team", 
         "to_team"
          )
-    search_fields = ("player_name", "from_teamname", "to_teamname", "season_name")
+    search_fields = ("player__name", "from_team__name", "to_team__name", "season__name")
+    list_select_related = ("season", "player", "from_team", "to_team")
     date_hierarchy = "date"
     autocomplete_fields = ("season", "player", "from_team", "to_team")
     list_per_page = 100
