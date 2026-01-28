@@ -30,11 +30,11 @@
       <li style="margin: 8px 0;">
         <strong>{{ a.awarded_at }}</strong> —
         {% if a.team %}
-          {% if a.team.logo %}<img src="{{ a.team.logo.url }}" style="width:22px;height:22px;border-radius:4px;object-fit:cover;vertical-align:middle;">{% endif %}
+          {% if a.team.logo %}<img src="{{ a.team.logo|media_src }}" style="width:22px;height:22px;border-radius:4px;object-fit:cover;vertical-align:middle;">{% endif %}
           {{ a.team.name }}
         {% endif %}
         {% if a.player %}
-          {% if a.player.photo %}<img src="{{ a.player.photo.url }}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;">{% endif %}
+          {% if a.player.photo %}<img src="{{ a.player.photo|media_src }}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;">{% endif %}
           {{ a.player.name }}
         {% endif %}
         {% if a.scope %}

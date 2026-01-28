@@ -65,7 +65,7 @@
                   <td>
                     <a class="d-flex align-items-center gap-2 text-decoration-none" href="{% url 'league:player_detail' r.player.id %}">
                       {% if r.player.photo %}
-                        <img class="xl-avatar" src="{{ r.player.photo.url }}" alt="">
+                        <img class="xl-avatar" src="{{ r.player.photo|media_src }}" alt="">
                       {% else %}
                         <span class="xl-avatar xl-avatar-placeholder"></span>
                       {% endif %}

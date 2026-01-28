@@ -51,7 +51,8 @@
 <style>
   .pbox { display:flex; align-items:center; gap:10px; margin:10px 0 16px; }
   .pimg { width:54px; height:54px; border-radius:50%; object-fit:cover; }
-  .muted { opacity:.75; font-size:12px; }
+  .muted { opacity:.75; font-size:13px; }
+  .last5 { font-size:15px; opacity:.85; }
   table { border-collapse:collapse; width:100%; margin-top:10px; }
   th, td { border:1px solid rgba(0,0,0,.08); padding:8px; text-align:left; }
   th { background:rgba(0,0,0,.02); }
@@ -61,7 +62,7 @@
   <div class="pbox">
     <div>
       {% if a_obj and a_obj.photo %}
-        <img class="pimg" src="{{ a_obj.photo.url }}" alt="{{ a_obj.name }}">
+        <img class="pimg" src="{{ a_obj.photo|media_src }}" alt="{{ a_obj.name }}">
       {% endif %}
       <div><strong>{{ a_obj.name }}</strong></div>
     </div>
@@ -70,7 +71,7 @@
 
     <div>
       {% if b_obj and b_obj.photo %}
-        <img class="pimg" src="{{ b_obj.photo.url }}" alt="{{ b_obj.name }}">
+        <img class="pimg" src="{{ b_obj.photo|media_src }}" alt="{{ b_obj.name }}">
       {% endif %}
       <div><strong>{{ b_obj.name }}</strong></div>
     </div>
@@ -108,8 +109,8 @@
   </table></div>
 
   <h2 style="margin-top:16px;">Last 5</h2>
-  <div class="muted">{{ a_obj.name }}: {{ result.a_last5 }}</div>
-  <div class="muted">{{ b_obj.name }}: {{ result.b_last5 }}</div>
+  <div class="muted last5">{{ a_obj.name }}: {{ result.a_last5 }}</div>
+  <div class="muted last5">{{ b_obj.name }}: {{ result.b_last5 }}</div>
 
   {% if result.head_to_head %}
     <h2 style="margin-top:16px;">Head to Head (matches where both played)</h2>

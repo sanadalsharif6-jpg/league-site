@@ -8,7 +8,7 @@
     {% for x in items %}
       <li style="display:flex;align-items:center;gap:10px;margin:10px 0;">
         {% if x.player.photo %}
-          <img src="{{ x.player.photo.url }}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
+          <img src="{{ x.player.photo|media_src }}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
         {% endif %}
 
         <div>
@@ -16,7 +16,7 @@
             <strong>{{ x.player.name }}</strong>
             {% if x.team %}
               {% if x.team.logo %}
-                <img src="{{ x.team.logo.url }}" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;">
+                <img src="{{ x.team.logo|media_src }}" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;">
               {% endif %}
               <span>{{ x.team.name }}</span>
             {% endif %}

@@ -6,7 +6,7 @@
   {% for t in teams %}
     <li>
       <a href="{% url 'league:team_detail' t.id %}">
-        {% if t.logo %}<img class="logo" src="{{ t.logo.url }}" alt="">{% endif %}
+        {% if t.logo %}<img class="logo" src="{{ t.logo|media_src }}" alt="">{% endif %}
         {{ t.name }}
       </a>
     </li>

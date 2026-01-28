@@ -3,14 +3,14 @@
 {% block content %}
 
 <h2>
-  {% if player.photo %}{% if player.photo %}<img class="photo" src="{{ player.photo.url }}" alt="">{% endif %}{% endif %}
+  {% if player.photo %}<img class="photo" src="{{ player.photo|media_src }}" alt="">{% endif %}
   {{ player.name }}
 </h2>
 
 <p>
   <b>Current Team:</b>
   {% if current_team %}
-    {% if current_team.logo %}{% if current_team.logo %}<img class="logo" src="{{ current_team.logo.url }}" alt="">{% endif %}{% endif %}
+    {% if current_team.logo %}<img class="logo" src="{{ current_team.logo|media_src }}" alt="">{% endif %}
     {{ current_team.name }}
   {% else %}
     <span class="muted">—</span>
@@ -22,7 +22,7 @@
   <ul>
     {% for m in team_history %}
       <li>
-        {% if m.team.logo %}{% if m.team.logo %}<img class="logo" src="{{ m.team.logo.url }}" alt="">{% endif %}{% endif %}
+        {% if m.team.logo %}<img class="logo" src="{{ m.team.logo|media_src }}" alt="">{% endif %}
         {{ m.team.name }} — {{ m.start_date }} {% if m.end_date %}→ {{ m.end_date }}{% else %}(active){% endif %}
       </li>
     {% endfor %}

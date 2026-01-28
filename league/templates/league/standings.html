@@ -149,7 +149,7 @@
                 <td>
                   <div class="team-cell">
                     {% if row.team.logo %}
-                      <img class="team-logo" src="{{ row.team.logo.url }}" alt="{{ row.team.name }} logo">
+                      <img class="team-logo" src="{{ row.team.logo|media_src }}" alt="{{ row.team.name }} logo">
                     {% endif %}
                     <div>
                       <div><strong>{{ row.team.name }}</strong></div>

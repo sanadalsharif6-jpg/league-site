@@ -35,7 +35,7 @@
   {% for tr in transfers %}
     <div class="t-row">
       {% if tr.player.photo %}
-        <img class="p-img" src="{{ tr.player.photo.url }}" alt="{{ tr.player.name }}">
+        <img class="p-img" src="{{ tr.player.photo|media_src }}" alt="{{ tr.player.name }}">
       {% endif %}
 
       <div style="flex:1;">
@@ -48,7 +48,7 @@
           <span class="team">
             {% if tr.from_team %}
               {% if tr.from_team.logo %}
-                <img class="logo" src="{{ tr.from_team.logo.url }}" alt="{{ tr.from_team.name }} logo">
+                <img class="logo" src="{{ tr.from_team.logo|media_src }}" alt="{{ tr.from_team.name }} logo">
               {% endif %}
               <span>{{ tr.from_team.name }}</span>
             {% else %}
@@ -60,7 +60,7 @@
 
           <span class="team">
             {% if tr.to_team.logo %}
-              <img class="logo" src="{{ tr.to_team.logo.url }}" alt="{{ tr.to_team.name }} logo">
+              <img class="logo" src="{{ tr.to_team.logo|media_src }}" alt="{{ tr.to_team.name }} logo">
             {% endif %}
             <span>{{ tr.to_team.name }}</span>
           </span>
