@@ -55,6 +55,11 @@ TEMPLATES = [
         "DIRS": [],  # templates inside app
         "APP_DIRS": True,
         "OPTIONS": {
+            # Custom template filters (e.g. `media_src`) used across many templates.
+            # Register them globally so templates don't need `{% load dict_extras %}`.
+            "builtins": [
+                "league.templatetags.dict_extras",
+            ],
             "context_processors": [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",

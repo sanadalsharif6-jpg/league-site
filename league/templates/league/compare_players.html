@@ -1,136 +1,247 @@
 {% extends "league/base.html" %}
     {% block title %}Compare Players | Xl LIBYAN FANTASY{% endblock %}
     {% block content %}
-    <h1>Compare Players</h1>
-
-<form method="get" style="margin-bottom:16px;">
-  <label>Season:</label>
-  <select name="season">
-    {% for s in seasons %}
-      <option value="{{ s.id }}" {% if season and s.id == season.id %}selected{% endif %}>{{ s.name }}</option>
-    {% endfor %}
-  </select>
-
-  <label>Competition:</label>
-  <select name="competition">
-    {% for c in competitions %}
-      <option value="{{ c.id }}" {% if competition and c.id == competition.id %}selected{% endif %}>
-        {{ c.name }} ({{ c.get_comp_type_display }})
-      </option>
-    {% endfor %}
-  </select>
-
-  <label>Scope:</label>
-  <select name="scope">
-    {% for sc in scopes %}
-      <option value="{{ sc.id }}" {% if active_scope and sc.id == active_scope.id %}selected{% endif %}>
-        {{ sc.division.name }} - {{ sc.group.name }}
-      </option>
-    {% endfor %}
-  </select>
-
-  <label>Player A:</label>
-  <select name="player_a">
-    <option value="">—</option>
-    {% for p in players %}
-      <option value="{{ p.id }}" {% if player_a and p.id == player_a %}selected{% endif %}>{{ p.name }}</option>
-    {% endfor %}
-  </select>
-
-  <label>Player B:</label>
-  <select name="player_b">
-    <option value="">—</option>
-    {% for p in players %}
-      <option value="{{ p.id }}" {% if player_b and p.id == player_b %}selected{% endif %}>{{ p.name }}</option>
-    {% endfor %}
-  </select>
-
-  <button type="submit">Compare</button>
-</form>
-
-<style>
-  .pbox { display:flex; align-items:center; gap:10px; margin:10px 0 16px; }
-  .pimg { width:54px; height:54px; border-radius:50%; object-fit:cover; }
-  .muted { opacity:.75; font-size:13px; }
-  .last5 { font-size:15px; opacity:.85; }
-  table { border-collapse:collapse; width:100%; margin-top:10px; }
-  th, td { border:1px solid rgba(0,0,0,.08); padding:8px; text-align:left; }
-  th { background:rgba(0,0,0,.02); }
-</style>
-
-{% if a_obj or b_obj %}
-  <div class="pbox">
-    <div>
-      {% if a_obj and a_obj.photo %}
-        <img class="pimg" src="{{ a_obj.photo|media_src }}" alt="{{ a_obj.name }}">
-      {% endif %}
-      <div><strong>{{ a_obj.name }}</strong></div>
+    <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-3">
+      <div>
+        <h1 class="mb-1">Compare Players</h1>
+        <div class="muted">Quick side-by-side comparison inside the selected scope.</div>
+      </div>
     </div>
 
-    <div style="font-weight:700;">vs</div>
+<style>
+  .cmp-card{ border:1px solid var(--xl-border); background: var(--xl-card); border-radius: 22px; box-shadow: 0 25px 60px rgba(0,0,0,.35); }
+  .cmp-card__body{ padding: 16px; }
 
-    <div>
-      {% if b_obj and b_obj.photo %}
-        <img class="pimg" src="{{ b_obj.photo|media_src }}" alt="{{ b_obj.name }}">
+  .cmp-form{ display:grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+  .cmp-form .f{ display:flex; flex-direction:column; gap: 6px; }
+  .cmp-form label{ font-size: 12px; color: var(--xl-muted); }
+  .cmp-form select{ border-radius: 12px; padding: 10px 10px; border: 1px solid var(--xl-border); background: rgba(0,0,0,.15); color: var(--xl-text); }
+  .cmp-form button{ border-radius: 14px; padding: 10px 14px; border: 1px solid var(--xl-border); background: rgba(255,255,255,.06); color: var(--xl-text); font-weight: 700; }
+  .cmp-form button:hover{ background: rgba(255,255,255,.10); }
+
+  .p-head{ display:grid; grid-template-columns: 1fr 120px 1fr; align-items:center; gap: 10px; }
+  .p-card{ display:flex; align-items:center; gap: 12px; padding: 12px; border: 1px solid var(--xl-border); border-radius: 18px; background: rgba(255,255,255,.04); }
+  .p-img{ width: 56px; height: 56px; border-radius: 50%; object-fit:cover; }
+  .p-name{ font-weight: 800; font-size: 16px; margin: 0; }
+  .p-sub{ color: var(--xl-muted); font-size: 12px; margin-top: 2px; }
+  .vs-pill{ text-align:center; font-weight: 900; letter-spacing: .5px; opacity: .9; }
+
+  .cmp-table{ width:100%; border-collapse: separate; border-spacing: 0; overflow:hidden; border-radius: 18px; border:1px solid var(--xl-border); }
+  .cmp-table th, .cmp-table td{ padding: 12px 12px; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .cmp-table th{ font-size: 12px; color: var(--xl-muted); background: rgba(0,0,0,.18); white-space: nowrap; }
+  .cmp-table tr:last-child td{ border-bottom: none; }
+  .cmp-metric{ font-weight: 700; }
+  .cmp-strong{ font-weight: 900; }
+  .cmp-badges{ display:flex; flex-wrap: wrap; gap: 6px; }
+  .cmp-badge{ display:inline-flex; align-items:center; justify-content:center; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--xl-border); background: rgba(0,0,0,.20); font-weight: 800; }
+  .cmp-badge--hi{ background: rgba(34,197,94,.16); }
+
+  @media (max-width: 992px){
+    .cmp-form{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 576px){
+    .p-head{ grid-template-columns: 1fr; }
+    .vs-pill{ display:none; }
+    .p-img{ width: 62px; height: 62px; }
+  }
+</style>
+
+<div class="cmp-card mb-3">
+  <div class="cmp-card__body">
+    <form method="get" class="cmp-form">
+      <div class="f">
+        <label>Season</label>
+        <select name="season">
+          {% for s in seasons %}
+            <option value="{{ s.id }}" {% if season and s.id == season.id %}selected{% endif %}>{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="f">
+        <label>Competition</label>
+        <select name="competition">
+          {% for c in competitions %}
+            <option value="{{ c.id }}" {% if competition and c.id == competition.id %}selected{% endif %}>
+              {{ c.name }} ({{ c.get_comp_type_display }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="f">
+        <label>Scope</label>
+        <select name="scope">
+          {% for sc in scopes %}
+            <option value="{{ sc.id }}" {% if active_scope and sc.id == active_scope.id %}selected{% endif %}>
+              {{ sc.division.name }} - {{ sc.group.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="f">
+        <label>Player A</label>
+        <select name="player_a">
+          <option value="">—</option>
+          {% for p in players %}
+            <option value="{{ p.id }}" {% if player_a and p.id == player_a %}selected{% endif %}>{{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="f">
+        <label>Player B</label>
+        <select name="player_b">
+          <option value="">—</option>
+          {% for p in players %}
+            <option value="{{ p.id }}" {% if player_b and p.id == player_b %}selected{% endif %}>{{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="f" style="justify-content:flex-end;">
+        <button type="submit">Compare</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if a_obj or b_obj %}
+  <div class="p-head mb-3">
+    <div class="p-card">
+      {% if a_obj and a_obj.photo %}
+        <img class="p-img" src="{{ a_obj.photo|media_src }}" alt="{{ a_obj.name }}">
+      {% else %}
+        <div class="p-img" style="background:rgba(255,255,255,.06); border:1px solid var(--xl-border);"></div>
       {% endif %}
-      <div><strong>{{ b_obj.name }}</strong></div>
+      <div>
+        <p class="p-name">{{ a_obj.name }}</p>
+        {% if active_scope %}<div class="p-sub">{{ active_scope.division.name }} — {{ active_scope.group.name }}</div>{% endif %}
+      </div>
+    </div>
+    <div class="vs-pill">VS</div>
+    <div class="p-card">
+      {% if b_obj and b_obj.photo %}
+        <img class="p-img" src="{{ b_obj.photo|media_src }}" alt="{{ b_obj.name }}">
+      {% else %}
+        <div class="p-img" style="background:rgba(255,255,255,.06); border:1px solid var(--xl-border);"></div>
+      {% endif %}
+      <div>
+        <p class="p-name">{{ b_obj.name }}</p>
+        {% if active_scope %}<div class="p-sub">{{ active_scope.division.name }} — {{ active_scope.group.name }}</div>{% endif %}
+      </div>
     </div>
   </div>
 {% endif %}
 
 {% if result %}
-  <h2>Summary</h2>
-  <div class="table-responsive"><table>
-    <tr>
-      <th></th>
-      <th>{{ a_obj.name }}</th>
-      <th>{{ b_obj.name }}</th>
-    </tr>
-    <tr>
-      <td>Total Points</td>
-      <td>{{ result.a.total_points }}</td>
-      <td>{{ result.b.total_points }}</td>
-    </tr>
-    <tr>
-      <td>Matches Played</td>
-      <td>{{ result.a.matches_played }}</td>
-      <td>{{ result.b.matches_played }}</td>
-    </tr>
-    <tr>
-      <td>Average</td>
-      <td>{{ result.a.average_points|floatformat:2 }}</td>
-      <td>{{ result.b.average_points|floatformat:2 }}</td>
-    </tr>
-    <tr>
-      <td>Best Match</td>
-      <td>{{ result.a.best_match_points }}</td>
-      <td>{{ result.b.best_match_points }}</td>
-    </tr>
-  </table></div>
+  <div class="cmp-card mb-3">
+    <div class="cmp-card__body">
+      <h2 class="mb-2" style="font-weight:900;">Summary</h2>
+      <div class="table-responsive">
+        <table class="cmp-table">
+          <thead>
+            <tr>
+              <th style="width:34%;">Metric</th>
+              <th style="width:33%;">{{ a_obj.name }}</th>
+              <th style="width:33%;">{{ b_obj.name }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="cmp-metric">Total Points</td>
+              <td class="cmp-strong">{{ result.a.total_points }}</td>
+              <td class="cmp-strong">{{ result.b.total_points }}</td>
+            </tr>
+            <tr>
+              <td class="cmp-metric">Matches Played</td>
+              <td>{{ result.a.matches_played }}</td>
+              <td>{{ result.b.matches_played }}</td>
+            </tr>
+            <tr>
+              <td class="cmp-metric">Average</td>
+              <td>{{ result.a.average_points|floatformat:2 }}</td>
+              <td>{{ result.b.average_points|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <td class="cmp-metric">Best Match</td>
+              <td>{{ result.a.best_match_points }}</td>
+              <td>{{ result.b.best_match_points }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-  <h2 style="margin-top:16px;">Last 5</h2>
-  <div class="muted last5">{{ a_obj.name }}: {{ result.a_last5 }}</div>
-  <div class="muted last5">{{ b_obj.name }}: {{ result.b_last5 }}</div>
+  <div class="cmp-card mb-3">
+    <div class="cmp-card__body">
+      <h2 class="mb-2" style="font-weight:900;">Last 5</h2>
+      <div class="muted mb-1" style="font-size: 13px;">(Most recent first)</div>
+      <div class="row g-2">
+        <div class="col-12 col-md-6">
+          <div class="p-card">
+            <div style="flex:1;">
+              <div class="p-name" style="font-size: 15px;">{{ a_obj.name }}</div>
+              <div class="cmp-badges mt-2">
+                {% for x in result.a_last5 %}
+                  <span class="cmp-badge{% if x|add:0 >= 50 %} cmp-badge--hi{% endif %}">{{ x }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-md-6">
+          <div class="p-card">
+            <div style="flex:1;">
+              <div class="p-name" style="font-size: 15px;">{{ b_obj.name }}</div>
+              <div class="cmp-badges mt-2">
+                {% for x in result.b_last5 %}
+                  <span class="cmp-badge{% if x|add:0 >= 50 %} cmp-badge--hi{% endif %}">{{ x }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   {% if result.head_to_head %}
-    <h2 style="margin-top:16px;">Head to Head (matches where both played)</h2>
-    <table>
-      <tr>
-        <th>Fixture</th>
-        <th>{{ a_obj.name }}</th>
-        <th>{{ b_obj.name }}</th>
-      </tr>
-      {% for r in result.head_to_head %}
-        <tr>
-          <td>{{ r.fixture.home_team.name }} vs {{ r.fixture.away_team.name }}</td>
-          <td>{{ r.a_pts }}</td>
-          <td>{{ r.b_pts }}</td>
-        </tr>
-      {% endfor %}
-    </table>
+    <div class="cmp-card">
+      <div class="cmp-card__body">
+        <h2 class="mb-2" style="font-weight:900;">Head to Head</h2>
+        <div class="muted mb-2" style="font-size: 13px;">Matches where both players have points recorded.</div>
+        <div class="table-responsive">
+          <table class="cmp-table">
+            <thead>
+              <tr>
+                <th>Fixture</th>
+                <th>{{ a_obj.name }}</th>
+                <th>{{ b_obj.name }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in result.head_to_head %}
+                <tr>
+                  <td>{{ r.fixture.home_team.name }} vs {{ r.fixture.away_team.name }}</td>
+                  <td class="cmp-strong">{{ r.a_pts }}</td>
+                  <td class="cmp-strong">{{ r.b_pts }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   {% endif %}
 {% else %}
-  <p class="muted">Pick two players and click Compare.</p>
+  <div class="cmp-card">
+    <div class="cmp-card__body">
+      <div class="muted">Pick a scope and two players, then click <strong>Compare</strong>.</div>
+    </div>
+  </div>
 {% endif %}
 
     {% endblock %}

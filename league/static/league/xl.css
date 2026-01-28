@@ -38,6 +38,29 @@
   z-index: 5;
 }
 
+/* Bootstrap dropdowns on a dark themed body: force readable colors */
+.dropdown-menu{
+  background: rgba(0,0,0,.85);
+  border: 1px solid var(--xl-border);
+  box-shadow: 0 20px 50px rgba(0,0,0,.45);
+}
+.dropdown-item{
+  color: var(--xl-text);
+}
+.dropdown-item:hover, .dropdown-item:focus{
+  background: rgba(255,255,255,.08);
+  color: var(--xl-text);
+}
+.dropdown-divider{
+  border-top: 1px solid var(--xl-border);
+}
+
+/* Mobile layout: make the content breathe more */
+@media (max-width: 576px){
+  .container{ padding-left: 16px !important; padding-right: 16px !important; }
+  main.container{ margin-top: 16px !important; margin-bottom: 16px !important; }
+}
+
 .xl-mark{
   display:inline-flex;
   align-items:center;
