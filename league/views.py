@@ -13,7 +13,7 @@ from .models import (
     Season, Competition, Scope,
     Team, Player, TeamMembership, Transfer,
     Gameweek, Fixture,
-    TeamStanding, PlayerStanding,
+    TeamStanding, PlayerStanding, PlayerScore,
     AchievementType, Achievement,
     Stage, Bracket, BracketRound, BracketTie,
 )
@@ -220,14 +220,16 @@ def player_detail(request, player_id: int):
     season, comp, seasons, competitions = _active_season_competition(request)
     player = get_object_or_404(Player, pk=player_id)
 
-    # الفريق الحالي
-    current_mem = TeamMembership.objects.filter(season=season, player=player, end_date__isnull=True).select_related("team").first()
+    current_mem = (
+        TeamMembership.objects.filter(season=season, player=player, end_date__isnull=True)
+        .select_related("team")
+        .first()
+    )
 
-    # تاريخ الفرق اللي لعب لها في الموسم (طلبك الأخير)
     history = list(
         TeamMembership.objects.filter(season=season, player=player)
         .select_related("team")
-        .order_by("start_date")
+        .order_by("start_date", "id")
     )
 
     transfers = list(
@@ -238,9 +240,50 @@ def player_detail(request, player_id: int):
 
     achievements = list(
         Achievement.objects.filter(season=season, player=player)
-        .select_related("achievement_type", "scope")
+        .select_related("achievement_type", "scope", "scope__division", "scope__group")
         .order_by("-awarded_at", "-id")
     )
+
+    scopes = list(
+        Scope.objects.filter(season=season, competition=comp)
+        .select_related("division", "group", "season", "competition")
+        .order_by("division__order", "group__order")
+    )
+
+    scope_id = request.GET.get("scope")
+    selected_scope = None
+    if scope_id:
+        selected_scope = next((sc for sc in scopes if str(sc.id) == str(scope_id)), None)
+
+    if not selected_scope and scopes:
+        sid = (
+            PlayerStanding.objects.filter(scope__in=scopes, player=player)
+            .order_by("scope__division__order", "scope__group__order")
+            .values_list("scope_id", flat=True)
+            .first()
+        )
+        if sid:
+            selected_scope = next((sc for sc in scopes if sc.id == sid), None)
+
+    if not selected_scope and scopes:
+        selected_scope = scopes[0]
+
+    player_standing = None
+    last5_scores = []
+    if selected_scope:
+        player_standing = PlayerStanding.objects.filter(scope=selected_scope, player=player).first()
+
+        last5_scores = list(
+            PlayerScore.objects.filter(player=player, result__fixture__scope=selected_scope)
+            .select_related(
+                "result",
+                "result__fixture",
+                "result__fixture__home_team",
+                "result__fixture__away_team",
+                "result__fixture__gameweek",
+            )
+            .order_by("-result__fixture__kickoff_at")[:5]
+        )
 
     context = {
         "season": season,
@@ -252,6 +295,10 @@ def player_detail(request, player_id: int):
         "team_history": history,
         "transfers": transfers,
         "achievements": achievements,
+        "scopes": scopes,
+        "selected_scope": selected_scope,
+        "player_standing": player_standing,
+        "last5_scores": last5_scores,
     }
     return render(request, "league/player_detail.html", context)
 
@@ -380,12 +427,72 @@ def team_detail(request, team_id: int):
     season, comp, seasons, competitions = _active_season_competition(request)
     team = get_object_or_404(Team, pk=team_id)
 
-    # لاعبين الفريق الحاليين
+    scopes = list(
+        Scope.objects.filter(season=season, competition=comp)
+        .select_related("division", "group", "season", "competition")
+        .order_by("division__order", "group__order")
+    )
+
+    scope_id = request.GET.get("scope")
+    selected_scope = None
+    if scope_id:
+        selected_scope = next((sc for sc in scopes if str(sc.id) == str(scope_id)), None)
+
+    if not selected_scope and scopes:
+        sid = (
+            TeamStanding.objects.filter(scope__in=scopes, team=team)
+            .order_by("scope__division__order", "scope__group__order")
+            .values_list("scope_id", flat=True)
+            .first()
+        )
+        if sid:
+            selected_scope = next((sc for sc in scopes if sc.id == sid), None)
+
+    if not selected_scope and scopes:
+        selected_scope = scopes[0]
+
+    team_standing = None
+    recent_fixtures = []
+    upcoming_fixtures = []
+    squad_points = {}
+
+    if selected_scope:
+        team_standing = (
+            TeamStanding.objects.filter(scope=selected_scope, team=team)
+            .select_related("team")
+            .first()
+        )
+
+        recent_fixtures = list(
+            Fixture.objects.filter(scope=selected_scope, is_played=True)
+            .filter(Q(home_team=team) | Q(away_team=team))
+            .select_related("home_team", "away_team", "gameweek", "scope")
+            .order_by("-kickoff_at")[:5]
+        )
+
+        upcoming_fixtures = list(
+            Fixture.objects.filter(scope=selected_scope, is_played=False)
+            .filter(Q(home_team=team) | Q(away_team=team))
+            .select_related("home_team", "away_team", "gameweek", "scope")
+            .order_by("kickoff_at")[:3]
+        )
+
     current_members = list(
         TeamMembership.objects.filter(season=season, team=team, end_date__isnull=True)
         .select_related("player")
         .order_by("player__name")
     )
+    member_player_ids = [m.player_id for m in current_members]
+
+    if selected_scope and member_player_ids:
+        ps_rows = (
+            PlayerStanding.objects.filter(scope=selected_scope, player_id__in=member_player_ids)
+            .values("player_id", "total_points", "average_points", "matches_played")
+        )
+        squad_points = {r["player_id"]: r for r in ps_rows}
+
+    transfers_in = Transfer.objects.filter(season=season, to_team=team).count()
+    transfers_out = Transfer.objects.filter(season=season, from_team=team).count()
 
     context = {
         "season": season,
@@ -393,7 +500,15 @@ def team_detail(request, team_id: int):
         "seasons": seasons,
         "competitions": competitions,
         "team": team,
+        "scopes": scopes,
+        "selected_scope": selected_scope,
+        "team_standing": team_standing,
+        "recent_fixtures": recent_fixtures,
+        "upcoming_fixtures": upcoming_fixtures,
         "current_members": current_members,
+        "squad_points": squad_points,
+        "transfers_in": transfers_in,
+        "transfers_out": transfers_out,
     }
     return render(request, "league/team_detail.html", context)
 
@@ -416,11 +531,6 @@ def compare_teams(request):
     if active_scope and team_a and team_b:
         res = head_to_head(active_scope, int(team_a), int(team_b))
 
-
-    # objects للفرق المختارين (لإظهار الشعار)
-    a_obj = Team.objects.filter(id=team_a).first() if team_a else None
-    b_obj = Team.objects.filter(id=team_b).first() if team_b else None
-
     context = {
         "season": season,
         "competition": comp,
@@ -431,8 +541,6 @@ def compare_teams(request):
         "teams": Team.objects.order_by("name"),
         "team_a": int(team_a) if team_a else None,
         "team_b": int(team_b) if team_b else None,
-        "a_obj": a_obj,
-        "b_obj": b_obj,
         "result": res,
     }
     return render(request, "league/compare_teams.html", context)

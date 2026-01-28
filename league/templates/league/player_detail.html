@@ -1,56 +1,196 @@
 {% extends "league/base.html" %}
-{% block title %}Player{% endblock %}
+{% block title %}{{ player.name }}{% endblock %}
 {% block content %}
 
-<h2>
-  {% if player.photo %}<img class="photo" src="{{ player.photo|media_src }}" alt="">{% endif %}
-  {{ player.name }}
-</h2>
+<div class="xl-hero">
+  <div class="xl-hero__inner">
+    <div style="min-width:0;">
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        {% if player.photo %}<img class="xl-logo" src="{{ player.photo|media_src }}" alt="">{% endif %}
+        <h1 class="xl-title" style="margin:0; font-size:32px;">{{ player.name }}</h1>
 
-<p>
-  <b>Current Team:</b>
-  {% if current_team %}
-    {% if current_team.logo %}<img class="logo" src="{{ current_team.logo|media_src }}" alt="">{% endif %}
-    {{ current_team.name }}
-  {% else %}
-    <span class="muted">—</span>
-  {% endif %}
-</p>
+        {% if current_team %}
+          <span class="xl-chip">
+            {% if current_team.logo %}<img class="xl-avatar" src="{{ current_team.logo|media_src }}" alt="">{% endif %}
+            {{ current_team.name }}
+          </span>
+        {% else %}
+          <span class="xl-chip">No current team</span>
+        {% endif %}
 
-<h3>Teams History (Season)</h3>
-{% if team_history %}
-  <ul>
-    {% for m in team_history %}
-      <li>
-        {% if m.team.logo %}<img class="logo" src="{{ m.team.logo|media_src }}" alt="">{% endif %}
-        {{ m.team.name }} — {{ m.start_date }} {% if m.end_date %}→ {{ m.end_date }}{% else %}(active){% endif %}
-      </li>
-    {% endfor %}
-  </ul>
-{% else %}
-  <p class="muted">No memberships yet.</p>
-{% endif %}
+        <span class="xl-chip"><span class="xl-dot"></span>{{ season.name }}</span>
+        {% if competition %}<span class="xl-chip">{{ competition.name }}</span>{% endif %}
+        {% if selected_scope %}<span class="xl-chip">{{ selected_scope.division.name }} / {{ selected_scope.group.name }}</span>{% endif %}
+      </div>
 
-<h3>Transfers</h3>
-{% if transfers %}
-  <ul>
-    {% for t in transfers %}
-      <li>{{ t.date }}: {{ t.from_team|default:"-" }} → <b>{{ t.to_team }}</b></li>
-    {% endfor %}
-  </ul>
-{% else %}
-  <p class="muted">No transfers</p>
-{% endif %}
+      <p class="xl-subtitle" style="margin-top:10px;">
+        {% if player_standing %}
+          Total <b>{{ player_standing.total_points }}</b> pts • Avg <b>{{ player_standing.average_points|floatformat:1 }}</b> • Best <b>{{ player_standing.best_match_points }}</b>
+        {% else %}
+          <span class="muted">No standing data yet for this scope.</span>
+        {% endif %}
+      </p>
+    </div>
 
-<h3>Achievements</h3>
-{% if achievements %}
-  <ul>
-    {% for a in achievements %}
-      <li>{{ a.awarded_at }} — <b>{{ a.achievement_type.name }}</b> {% if a.scope %}<span class="muted">({{ a.scope.division.name }} / {{ a.scope.group.name }})</span>{% endif %}</li>
-    {% endfor %}
-  </ul>
-{% else %}
-  <p class="muted">No achievements</p>
-{% endif %}
+    {% if scopes and scopes|length > 1 %}
+      <form method="get" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        {% if season %}<input type="hidden" name="season" value="{{ season.id }}">{% endif %}
+        {% if competition %}<input type="hidden" name="competition" value="{{ competition.id }}">{% endif %}
+        <select name="scope" class="xl-input">
+          {% for sc in scopes %}
+            <option value="{{ sc.id }}" {% if selected_scope and sc.id == selected_scope.id %}selected{% endif %}>
+              {{ sc.division.name }} / {{ sc.group.name }}
+            </option>
+          {% endfor %}
+        </select>
+        <button class="xl-btn xl-btn--ghost" type="submit">Apply</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="xl-grid" style="margin-top:14px;">
+  <div class="xl-card">
+    <div class="xl-card__body">
+      <div class="xl-card__title">Last 5 Matches</div>
+      {% if last5_scores %}
+        <table class="xl-table">
+          <thead>
+            <tr>
+              <th>GW</th>
+              <th>Match</th>
+              <th class="xl-right">Pts</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ps in last5_scores %}
+              {% with f=ps.result.fixture %}
+                <tr>
+                  <td>{{ f.gameweek.number }}</td>
+                  <td>
+                    {{ f.home_team.name }} vs {{ f.away_team.name }}
+                    <span class="muted">• {{ f.kickoff_at|date:"M d" }}</span>
+                  </td>
+                  <td class="xl-right"><b>{{ ps.points }}</b></td>
+                </tr>
+              {% endwith %}
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="muted" style="margin:0;">No recent scores.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="xl-card">
+    <div class="xl-card__body">
+      <div class="xl-card__title">Season Profile</div>
+      <div class="xl-statgrid">
+        <div class="xl-stat">
+          <div class="xl-stat__label">Current Team</div>
+          <div class="xl-stat__value">{% if current_team %}{{ current_team.name }}{% else %}—{% endif %}</div>
+        </div>
+        <div class="xl-stat">
+          <div class="xl-stat__label">Transfers</div>
+          <div class="xl-stat__value">{{ transfers|length }}</div>
+        </div>
+        <div class="xl-stat">
+          <div class="xl-stat__label">Achievements</div>
+          <div class="xl-stat__value">{{ achievements|length }}</div>
+        </div>
+        <div class="xl-stat">
+          <div class="xl-stat__label">Teams Played For</div>
+          <div class="xl-stat__value">{{ team_history|length }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="xl-grid" style="margin-top:14px;">
+  <div class="xl-card">
+    <div class="xl-card__body">
+      <div class="xl-card__title">Teams History (Season)</div>
+      {% if team_history %}
+        <table class="xl-table">
+          <thead>
+            <tr>
+              <th>Team</th>
+              <th>From</th>
+              <th>To</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in team_history %}
+              <tr>
+                <td>
+                  {% if m.team.logo %}<img class="xl-avatar" src="{{ m.team.logo|media_src }}" alt="">{% endif %}
+                  {{ m.team.name }}
+                </td>
+                <td>{{ m.start_date }}</td>
+                <td>{% if m.end_date %}{{ m.end_date }}{% else %}<span class="xl-chip">active</span>{% endif %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="muted" style="margin:0;">No memberships yet.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="xl-card">
+    <div class="xl-card__body">
+      <div class="xl-card__title">Transfers</div>
+      {% if transfers %}
+        <table class="xl-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Move</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in transfers %}
+              <tr>
+                <td>{{ t.date }}</td>
+                <td>
+                  {% if t.from_team %}{{ t.from_team.name }}{% else %}-{% endif %}
+                  → <b>{{ t.to_team.name }}</b>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="muted" style="margin:0;">No transfers.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="xl-card" style="margin-top:14px;">
+  <div class="xl-card__body">
+    <div class="xl-card__title">Achievements</div>
+    {% if achievements %}
+      <div class="xl-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+        {% for a in achievements %}
+          <div class="xl-stage" style="cursor:default;">
+            <div class="xl-stage__top">
+              <span class="xl-chip">{{ a.awarded_at|date:"M d, Y" }}</span>
+              {% if a.scope %}
+                <span class="xl-chip">{{ a.scope.division.name }} / {{ a.scope.group.name }}</span>
+              {% endif %}
+            </div>
+            <div class="xl-stage__name">{{ a.achievement_type.name }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="muted" style="margin:0;">No achievements.</p>
+    {% endif %}
+  </div>
+</div>
 
 {% endblock %}

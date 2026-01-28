@@ -38,29 +38,6 @@
   z-index: 5;
 }
 
-/* Bootstrap dropdowns on a dark themed body: force readable colors */
-.dropdown-menu{
-  background: rgba(0,0,0,.85);
-  border: 1px solid var(--xl-border);
-  box-shadow: 0 20px 50px rgba(0,0,0,.45);
-}
-.dropdown-item{
-  color: var(--xl-text);
-}
-.dropdown-item:hover, .dropdown-item:focus{
-  background: rgba(255,255,255,.08);
-  color: var(--xl-text);
-}
-.dropdown-divider{
-  border-top: 1px solid var(--xl-border);
-}
-
-/* Mobile layout: make the content breathe more */
-@media (max-width: 576px){
-  .container{ padding-left: 16px !important; padding-right: 16px !important; }
-  main.container{ margin-top: 16px !important; margin-bottom: 16px !important; }
-}
-
 .xl-mark{
   display:inline-flex;
   align-items:center;
@@ -371,3 +348,12 @@
   .xl-table th, .xl-table td{ padding: .45rem .55rem; white-space: normal; }
   .xl-table th.text-nowrap, .xl-table td.text-nowrap{ white-space: nowrap; }
 }
+
+
+/* --- Detail pages: stat grid --- */
+.xl-statgrid{ display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.xl-stat{ border:1px solid var(--xl-border); background: rgba(255,255,255,.05); border-radius: 16px; padding: 12px; }
+.xl-stat__label{ font-size: 12px; color: var(--xl-muted); }
+.xl-stat__value{ margin-top:6px; font-weight: 800; font-size: 18px; letter-spacing: -0.2px; }
+.xl-stat--wide{ grid-column: 1 / -1; }
+@media (max-width: 520px){ .xl-statgrid{ grid-template-columns: 1fr; } }
