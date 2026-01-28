@@ -416,6 +416,11 @@ def compare_teams(request):
     if active_scope and team_a and team_b:
         res = head_to_head(active_scope, int(team_a), int(team_b))
 
+
+    # objects للفرق المختارين (لإظهار الشعار)
+    a_obj = Team.objects.filter(id=team_a).first() if team_a else None
+    b_obj = Team.objects.filter(id=team_b).first() if team_b else None
+
     context = {
         "season": season,
         "competition": comp,
@@ -426,6 +431,8 @@ def compare_teams(request):
         "teams": Team.objects.order_by("name"),
         "team_a": int(team_a) if team_a else None,
         "team_b": int(team_b) if team_b else None,
+        "a_obj": a_obj,
+        "b_obj": b_obj,
         "result": res,
     }
     return render(request, "league/compare_teams.html", context)

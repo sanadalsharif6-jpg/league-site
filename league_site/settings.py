@@ -115,10 +115,11 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 
 
-# Django 4.2+/5+/6+ recommended storage configuration
 # =========================
 # Storage (Cloudinary on Render; local fallback)
 # =========================
+# We enable Cloudinary only when CLOUDINARY_URL is provided in the environment.
+# This prevents admin image uploads from crashing when the variable is missing/misnamed.
 USE_CLOUDINARY = bool(os.environ.get("CLOUDINARY_URL"))
 
 if USE_CLOUDINARY:
@@ -126,16 +127,16 @@ if USE_CLOUDINARY:
         "default": {"BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage"},
         "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
     }
+    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 else:
     STORAGES = {
         "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
         "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
     }
+    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
-
-DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 ENABLE_SCOPE_REBUILD_ON_SAVE = False  # do NOT rebuild heavy standings on every admin save
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
