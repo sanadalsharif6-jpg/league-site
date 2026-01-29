@@ -1,29 +1,24 @@
 {% extends "league/base.html" %}
+
 {% block title %}Transfers | Xl LIBYAN FANTASY{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
-  <div>
-    <h1 class="mb-1">Transfers</h1>
-    <div class="text-muted">Track player movement across teams.</div>
-  </div>
-</div>
+  <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-2 mb-3">
+    <h1 class="m-0">Transfers</h1>
 
-<div class="card xl-card mb-4">
-  <div class="card-body">
-    <form method="get" class="row g-3 align-items-end">
-      <div class="col-12 col-md-4">
-        <label class="form-label mb-1">Season</label>
-        <select name="season" class="form-select">
+    <form method="get" class="d-flex flex-wrap align-items-end gap-2">
+      <div>
+        <label class="form-label mb-1 small muted">Season</label>
+        <select class="form-select form-select-sm" name="season">
           {% for s in seasons %}
             <option value="{{ s.id }}" {% if season and s.id == season.id %}selected{% endif %}>{{ s.name }}</option>
           {% endfor %}
         </select>
       </div>
 
-      <div class="col-12 col-md-6">
-        <label class="form-label mb-1">Competition</label>
-        <select name="competition" class="form-select">
+      <div>
+        <label class="form-label mb-1 small muted">Competition</label>
+        <select class="form-select form-select-sm" name="competition">
           {% for c in competitions %}
             <option value="{{ c.id }}" {% if competition and c.id == competition.id %}selected{% endif %}>
               {{ c.name }} ({{ c.get_comp_type_display }})
@@ -32,59 +27,80 @@
         </select>
       </div>
 
-      <div class="col-12 col-md-2 d-grid">
-        <button type="submit" class="btn btn-primary">Apply</button>
-      </div>
+      <button type="submit" class="xl-btn xl-btn--ghost">Apply</button>
     </form>
   </div>
-</div>
 
-{% if transfers %}
-  <div class="list-group">
-    {% for tr in transfers %}
-      <div class="list-group-item">
-        <div class="d-flex gap-3">
-          <div class="flex-shrink-0">
-            {% if tr.player.photo %}
-              <img src="{{ tr.player.photo.url }}" alt="{{ tr.player.name }}" class="rounded-circle" style="width:44px;height:44px;object-fit:cover;">
-            {% else %}
-              <div class="rounded-circle bg-body-tertiary border" style="width:44px;height:44px;"></div>
-            {% endif %}
+  {% if transfers %}
+    <div class="xl-card">
+      <div class="xl-card__body">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <span class="xl-chip">{{ season.name }}</span>
+            <span class="xl-chip">{{ competition.name }}</span>
           </div>
+          <div class="muted small">{{ transfers|length }} transfer{{ transfers|length|pluralize }}</div>
+        </div>
 
-          <div class="flex-grow-1">
-            <div class="d-flex flex-wrap align-items-center gap-2">
-              <div class="fw-semibold">{{ tr.player.name }}</div>
-              <span class="badge text-bg-secondary">{{ tr.date|date:"Y-m-d" }}</span>
+        <div class="d-flex flex-column gap-2">
+          {% for tr in transfers %}
+            <div class="p-3 rounded-4" style="border:1px solid rgba(255,255,255,.10); background: rgba(0,0,0,.18);">
+              <div class="d-flex align-items-start justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-3">
+                  {% if tr.player.photo %}
+                    <img src="{{ tr.player.photo|media_src }}" alt="{{ tr.player.name }}" style="width:46px;height:46px;border-radius:50%;object-fit:cover;" />
+                  {% else %}
+                    <div style="width:46px;height:46px;border-radius:50%; background: rgba(255,255,255,.06);"></div>
+                  {% endif %}
+
+                  <div>
+                    <div class="fw-bold">{{ tr.player.name }}</div>
+                    <div class="muted small">{{ tr.date|date:"Y-m-d" }}</div>
+                  </div>
+                </div>
+
+                <div class="text-end">
+                  <span class="xl-chip">Move</span>
+                </div>
+              </div>
+
+              <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2 mt-3">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <span class="muted small">From</span>
+                  <span class="d-inline-flex align-items-center gap-2">
+                    {% if tr.from_team %}
+                      {% if tr.from_team.logo %}
+                        <img src="{{ tr.from_team.logo|media_src }}" alt="{{ tr.from_team.name }} logo" style="width:20px;height:20px;object-fit:contain;" />
+                      {% endif %}
+                      <span class="fw-semibold">{{ tr.from_team.name }}</span>
+                    {% else %}
+                      <span class="muted">—</span>
+                    {% endif %}
+                  </span>
+                </div>
+
+                <div class="muted small">→</div>
+
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <span class="muted small">To</span>
+                  <span class="d-inline-flex align-items-center gap-2">
+                    {% if tr.to_team.logo %}
+                      <img src="{{ tr.to_team.logo|media_src }}" alt="{{ tr.to_team.name }} logo" style="width:20px;height:20px;object-fit:contain;" />
+                    {% endif %}
+                    <span class="fw-semibold">{{ tr.to_team.name }}</span>
+                  </span>
+                </div>
+              </div>
+
+              {% if tr.note %}
+                <div class="muted small mt-2">{{ tr.note }}</div>
+              {% endif %}
             </div>
-
-            <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
-              <span class="d-inline-flex align-items-center gap-2">
-                {% if tr.from_team and tr.from_team.logo %}
-                  <img src="{{ tr.from_team.logo.url }}" alt="{{ tr.from_team.name }} logo" style="width:20px;height:20px;object-fit:contain;">
-                {% endif %}
-                <span class="text-muted">{% if tr.from_team %}{{ tr.from_team.name }}{% else %}—{% endif %}</span>
-              </span>
-
-              <span class="text-muted">→</span>
-
-              <span class="d-inline-flex align-items-center gap-2">
-                {% if tr.to_team and tr.to_team.logo %}
-                  <img src="{{ tr.to_team.logo.url }}" alt="{{ tr.to_team.name }} logo" style="width:20px;height:20px;object-fit:contain;">
-                {% endif %}
-                <span class="fw-semibold">{% if tr.to_team %}{{ tr.to_team.name }}{% else %}—{% endif %}</span>
-              </span>
-            </div>
-
-            {% if tr.note %}
-              <div class="mt-2 small text-muted">{{ tr.note }}</div>
-            {% endif %}
-          </div>
+          {% endfor %}
         </div>
       </div>
-    {% endfor %}
-  </div>
-{% else %}
-  <div class="alert alert-secondary">No transfers yet.</div>
-{% endif %}
+    </div>
+  {% else %}
+    <div class="xl-card"><div class="xl-card__body muted">No transfers yet.</div></div>
+  {% endif %}
 {% endblock %}

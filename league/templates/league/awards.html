@@ -1,30 +1,24 @@
 {% extends "league/base.html" %}
 {% load dict_extras %}
+
 {% block title %}Awards | Xl LIBYAN FANTASY{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
-  <div>
-    <h1 class="mb-1">Awards</h1>
-    <div class="text-muted">Winners by season & competition.</div>
-  </div>
-</div>
-
-<div class="card xl-card mb-4">
-  <div class="card-body">
-    <form method="get" class="row g-3 align-items-end">
-      <div class="col-12 col-md-4">
-        <label class="form-label mb-1">Season</label>
-        <select name="season" class="form-select">
+  <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-2 mb-3">
+    <h1 class="m-0">Awards</h1>
+    <form method="get" class="d-flex flex-wrap align-items-end gap-2">
+      <div>
+        <label class="form-label mb-1 small muted">Season</label>
+        <select class="form-select form-select-sm" name="season">
           {% for s in seasons %}
             <option value="{{ s.id }}" {% if s.id == active_season.id %}selected{% endif %}>{{ s.name }}</option>
           {% endfor %}
         </select>
       </div>
 
-      <div class="col-12 col-md-6">
-        <label class="form-label mb-1">Competition</label>
-        <select name="competition" class="form-select">
+      <div>
+        <label class="form-label mb-1 small muted">Competition</label>
+        <select class="form-select form-select-sm" name="competition">
           {% for c in competitions %}
             <option value="{{ c.id }}" {% if c.id == active_competition.id %}selected{% endif %}>
               {{ c.name }} ({{ c.get_comp_type_display }})
@@ -33,91 +27,98 @@
         </select>
       </div>
 
-      <div class="col-12 col-md-2 d-grid">
-        <button type="submit" class="btn btn-primary">Apply</button>
-      </div>
+      <button type="submit" class="xl-btn xl-btn--ghost">Apply</button>
     </form>
   </div>
-</div>
 
-{% if blocks %}
-  {% for b in blocks %}
-    <div class="d-flex align-items-center justify-content-between mb-2 mt-4">
-      <h2 class="h5 mb-0">
-        {% if b.division %}{{ b.division.name }}{% else %}General{% endif %}
-      </h2>
-    </div>
+  {% if blocks %}
+    <div class="d-flex flex-column gap-3">
+      {% for b in blocks %}
+        <div class="xl-card">
+          <div class="xl-card__body">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+              <div class="d-flex align-items-center gap-2">
+                <span class="xl-chip">{{ active_season.name }}</span>
+                <span class="xl-chip">{{ active_competition.name }}</span>
+              </div>
+              <div class="fw-bold">
+                {% if b.division %}{{ b.division.name }}{% else %}General{% endif %}
+              </div>
+            </div>
 
-    {% for t in b.types %}
-      <div class="card xl-card mb-3">
-        <div class="card-header d-flex align-items-center justify-content-between">
-          <div class="fw-semibold">{{ t.name }}</div>
-          <span class="badge text-bg-secondary">{{ active_season.name }}</span>
-        </div>
-
-        {% with items=b.grouped|get_item:t %}
-          {% if items %}
-            <div class="list-group list-group-flush">
-              {% for a in items %}
-                <div class="list-group-item">
-                  <div class="d-flex gap-3">
-                    <div class="flex-shrink-0">
-                      {% if a.player and a.player.photo %}
-                        <img src="{{ a.player.photo.url }}" alt="{{ a.player.name }}" class="rounded-circle" style="width:42px;height:42px;object-fit:cover;">
-                      {% elif a.team and a.team.logo %}
-                        <img src="{{ a.team.logo.url }}" alt="{{ a.team.name }}" class="rounded-circle" style="width:42px;height:42px;object-fit:cover;">
-                      {% else %}
-                        <div class="rounded-circle bg-body-tertiary border" style="width:42px;height:42px;"></div>
-                      {% endif %}
-                    </div>
-
-                    <div class="flex-grow-1">
-                      <div class="d-flex flex-wrap align-items-center gap-2">
-                        <div class="fw-semibold">
-                          {% if a.player %}{{ a.player.name }}{% else %}{{ a.team.name }}{% endif %}
-                        </div>
-
-                        {% if a.team %}
-                          <span class="text-muted">•</span>
-                          <span class="d-inline-flex align-items-center gap-2">
-                            {% if a.team.logo %}
-                              <img src="{{ a.team.logo.url }}" alt="{{ a.team.name }} logo" style="width:18px;height:18px;object-fit:contain;">
-                            {% endif %}
-                            <span class="text-muted">{{ a.team.name }}</span>
-                          </span>
-                        {% endif %}
-
-                        <span class="ms-auto small text-muted">{{ a.awarded_at|date:"Y-m-d H:i" }}</span>
-                      </div>
-
-                      <div class="small text-muted mt-1">
-                        {% if a.opponent_team or a.opponent_player %}
-                          vs
-                          {% if a.opponent_player %}{{ a.opponent_player.name }}{% endif %}
-                          {% if a.opponent_team %} ({{ a.opponent_team.name }}){% endif %}
-                        {% endif %}
-                        {% if a.fixture %}
-                          {% if a.opponent_team or a.opponent_player %} — {% endif %}
-                          Match: {{ a.fixture.home_team.name }} vs {{ a.fixture.away_team.name }}
-                        {% endif %}
-                      </div>
-
-                      {% if a.note %}
-                        <div class="mt-2 small">{{ a.note }}</div>
-                      {% endif %}
-                    </div>
+            <div class="d-flex flex-column gap-3">
+              {% for t in b.types %}
+                <div class="border rounded-4 p-3" style="border-color: rgba(255,255,255,.10)!important; background: rgba(255,255,255,.03);">
+                  <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                    <div class="fw-bold">{{ t.name }}</div>
+                    {% with items=b.grouped|get_item:t %}
+                      {% if items %}<span class="xl-chip">{{ items|length }} winner{{ items|length|pluralize }}</span>{% endif %}
+                    {% endwith %}
                   </div>
+
+                  {% with items=b.grouped|get_item:t %}
+                    {% if items %}
+                      <div class="d-flex flex-column gap-2">
+                        {% for a in items %}
+                          <a class="text-decoration-none" href="{% if a.player %}{% url 'league:player_detail' a.player.id %}{% elif a.team %}{% url 'league:team_detail' a.team.id %}{% else %}#{% endif %}">
+                            <div class="d-flex align-items-start justify-content-between gap-3 p-3 rounded-4" style="border:1px solid rgba(255,255,255,.10); background: rgba(0,0,0,.18);">
+                              <div class="d-flex align-items-center gap-3">
+                                {% if a.player and a.player.photo %}
+                                  <img src="{{ a.player.photo|media_src }}" alt="{{ a.player.name }}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" />
+                                {% elif a.team and a.team.logo %}
+                                  <img src="{{ a.team.logo|media_src }}" alt="{{ a.team.name }}" style="width:44px;height:44px;border-radius:14px;object-fit:contain; background: rgba(255,255,255,.04); padding:6px;" />
+                                {% else %}
+                                  <div style="width:44px;height:44px;border-radius:50%; background: rgba(255,255,255,.06);"></div>
+                                {% endif %}
+
+                                <div>
+                                  <div class="fw-bold">
+                                    {% if a.player %}{{ a.player.name }}{% else %}{{ a.team.name }}{% endif %}
+                                  </div>
+                                  <div class="muted small d-flex flex-wrap align-items-center gap-2">
+                                    {% if a.team %}
+                                      {% if a.team.logo %}
+                                        <img src="{{ a.team.logo|media_src }}" alt="{{ a.team.name }} logo" style="width:18px;height:18px;object-fit:contain;" />
+                                      {% endif %}
+                                      <span>{{ a.team.name }}</span>
+                                    {% endif %}
+
+                                    {% if a.opponent_team or a.opponent_player %}
+                                      <span class="xl-chip">vs</span>
+                                      {% if a.opponent_player %}<span>{{ a.opponent_player.name }}</span>{% endif %}
+                                      {% if a.opponent_team %}<span>({{ a.opponent_team.name }})</span>{% endif %}
+                                    {% endif %}
+                                  </div>
+
+                                  {% if a.fixture %}
+                                    <div class="muted small mt-1">Match: {{ a.fixture.home_team.name }} vs {{ a.fixture.away_team.name }}</div>
+                                  {% endif %}
+                                  {% if a.note %}
+                                    <div class="muted small mt-1">{{ a.note }}</div>
+                                  {% endif %}
+                                </div>
+                              </div>
+
+                              <div class="text-end">
+                                <div class="xl-chip">{{ a.awarded_at|date:"Y-m-d" }}</div>
+                                <div class="muted small mt-1">{{ a.awarded_at|date:"H:i" }}</div>
+                              </div>
+                            </div>
+                          </a>
+                        {% endfor %}
+                      </div>
+                    {% else %}
+                      <div class="muted">No winners yet.</div>
+                    {% endif %}
+                  {% endwith %}
                 </div>
               {% endfor %}
             </div>
-          {% else %}
-            <div class="card-body text-muted">No winners yet.</div>
-          {% endif %}
-        {% endwith %}
-      </div>
-    {% endfor %}
-  {% endfor %}
-{% else %}
-  <div class="alert alert-secondary">No awards yet.</div>
-{% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="xl-card"><div class="xl-card__body muted">No awards yet.</div></div>
+  {% endif %}
 {% endblock %}
