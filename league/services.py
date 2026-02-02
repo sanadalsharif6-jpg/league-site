@@ -533,9 +533,16 @@ def head_to_head(scope: Scope, team_a_id: int, team_b_id: int):
     biggest_fixture = None
 
     for f in qs:
-        # Determine whether we consider this fixture played
-        has_result = hasattr(f, "result") and f.result_id is not None
-        if not (f.is_played or has_result):
+                # Determine whether we consider this fixture played (supports reverse one-to-one)
+        result_obj = None
+        try:
+            result_obj = f.result
+        except Exception:
+            # reverse one-to-one raises RelatedObjectDoesNotExist
+            result_obj = None
+
+        has_result = result_obj is not None
+        if not (getattr(f, "is_played", False) or has_result):
             continue
 
         # Compute totals (prefer cached fields, fallback to aggregation)
@@ -545,7 +552,7 @@ def head_to_head(scope: Scope, team_a_id: int, team_b_id: int):
         if has_result and (home_pts == 0 and away_pts == 0):
             agg = (
                 PlayerScore.objects
-                .filter(result_id=f.result_id)
+                .filter(result_id=result_obj.id)
                 .values("side")
                 .annotate(total=Sum("points"))
             )
@@ -553,7 +560,7 @@ def head_to_head(scope: Scope, team_a_id: int, team_b_id: int):
             home_pts = totals.get(PlayerScore.HOME, 0)
             away_pts = totals.get(PlayerScore.AWAY, 0)
 
-        # Accumulate A/B points depending on orientation
+# Accumulate A/B points depending on orientation
         if f.home_team_id == team_a_id:
             a_home = True
             a_match_pts = int(getattr(f, "home_match_points", 0) or 0)

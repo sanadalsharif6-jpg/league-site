@@ -298,7 +298,7 @@
 }
 
 
-.xl-logo{ width:32px; height:32px; border-radius:10px; object-fit:cover; box-shadow: 0 6px 18px rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.16); }
+\.xl-logo{ width:48px; height:48px; border-radius:14px; padding:6px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); object-fit:contain; box-shadow: 0 6px 18px rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.16); }
 .xl-date{ color: rgba(255,255,255,.92) !important; }
 .xl-table td, .xl-table th{ vertical-align: middle; }
 .xl-table a{ color: rgba(255,255,255,.90); }
@@ -325,7 +325,7 @@
   .xl-table{ font-size: .88rem; }
   .xl-table th, .xl-table td{ padding: .45rem .5rem; }
   .xl-table th.text-nowrap, .xl-table td.text-nowrap{ white-space: nowrap; }
-  .xl-logo{ width:28px; height:28px; border-radius:10px; }
+  \.xl-logo{ width:48px; height:48px; border-radius:10px; }
   .navbar-brand span{ font-size: .95rem; }
   .xl-pill{ margin-top: 6px; }
 }
