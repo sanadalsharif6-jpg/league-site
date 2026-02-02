@@ -81,7 +81,7 @@
                   <span class="d-inline-flex align-items-center gap-2">
                     {% if tr.from_team %}
                       {% if tr.from_team.logo %}
-                        <img src="{{ tr.from_team.logo|media_src }}" alt="{{ tr.from_team.name }} logo" style="width:20px;height:20px;object-fit:contain;" / class="xl-logo">
+                        <img src="{{ tr.from_team.logo|media_src }}" alt="{{ tr.from_team.name }} logo" class="team-logo team-logo--sm">
                       {% endif %}
                       <span class="fw-semibold">{{ tr.from_team.name }}</span>
                     {% else %}
@@ -96,7 +96,7 @@
                   <span class="muted small">To</span>
                   <span class="d-inline-flex align-items-center gap-2">
                     {% if tr.to_team.logo %}
-                      <img src="{{ tr.to_team.logo|media_src }}" alt="{{ tr.to_team.name }} logo" style="width:20px;height:20px;object-fit:contain;" / class="xl-logo">
+                      <img src="{{ tr.to_team.logo|media_src }}" alt="{{ tr.to_team.name }} logo" class="team-logo team-logo--sm">
                     {% endif %}
                     <span class="fw-semibold">{{ tr.to_team.name }}</span>
                   </span>
