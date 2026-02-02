@@ -6,7 +6,16 @@
 {% block content %}
 
 <style>
-  .xl-logo{
+  /* Team logo only (do not touch the navbar league logo) */
+  .xl-team-logo{
+    width:56px; height:56px;
+    object-fit:contain;
+    background: rgba(255,255,255,.08);
+    padding:6px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.10);
+  }
+  .xl-team-logo--sm{
     width:28px; height:28px;
     object-fit:contain;
     background: rgba(255,255,255,.08);
@@ -77,7 +86,7 @@
                                 {% if a.player and a.player.photo %}
                                   <img src="{{ a.player.photo|media_src }}" alt="{{ a.player.name }}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" />
                                 {% elif a.team and a.team.logo %}
-                                  <img src="{{ a.team.logo|media_src }}" alt="{{ a.team.name }}" style="width:44px;height:44px;border-radius:14px;object-fit:contain; background: rgba(255,255,255,.04); padding:6px;" / class="xl-logo">
+                                  <img src="{{ a.team.logo|media_src }}" alt="{{ a.team.name }}" class="xl-team-logo" />
                                 {% else %}
                                   <div style="width:44px;height:44px;border-radius:50%; background: rgba(255,255,255,.06);"></div>
                                 {% endif %}
@@ -89,7 +98,7 @@
                                   <div class="muted small d-flex flex-wrap align-items-center gap-2">
                                     {% if a.team %}
                                       {% if a.team.logo %}
-                                        <img src="{{ a.team.logo|media_src }}" alt="{{ a.team.name }} logo" style="width:18px;height:18px;object-fit:contain;" / class="xl-logo">
+                                        <img src="{{ a.team.logo|media_src }}" alt="{{ a.team.name }} logo" class="xl-team-logo--sm" />
                                       {% endif %}
                                       <span>{{ a.team.name }}</span>
                                     {% endif %}

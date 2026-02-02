@@ -5,8 +5,9 @@
 {% block content %}
 
 <style>
-  .xl-logo{
-    width:28px; height:28px;
+  /* Team logo only (do not touch the navbar league logo) */
+  .xl-team-logo--sm{
+    width:32px; height:32px;
     object-fit:contain;
     background: rgba(255,255,255,.08);
     padding:4px;
@@ -49,7 +50,7 @@
                     {% if x.team %}
                       <div class="muted small d-flex align-items-center gap-2 mt-1">
                         {% if x.team.logo %}
-                          <img src="{{ x.team.logo|media_src }}" alt="{{ x.team.name }} logo" style="width:18px;height:18px;object-fit:contain;" / class="xl-logo">
+                          <img src="{{ x.team.logo|media_src }}" alt="{{ x.team.name }} logo" class="xl-team-logo--sm" />
                         {% endif %}
                         <span>{{ x.team.name }}</span>
                       </div>

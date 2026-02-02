@@ -9,7 +9,8 @@
 </div>
 
 <style>
-  \.xl-logo{width:48px;height:48px;object-fit:contain;background: rgba(255,255,255,.08);padding:5px;border-radius:12px;border:1px solid rgba(255,255,255,.10);} 
+  /* Team logos only (avoid affecting the navbar league logo) */
+  .xl-team-logo{width:56px;height:56px;object-fit:contain;background: rgba(255,255,255,.08);padding:6px;border-radius:14px;border:1px solid rgba(255,255,255,.10);} 
 
   .cmp-card{ border:1px solid var(--xl-border); background: var(--xl-card); border-radius: 22px; box-shadow: 0 25px 60px rgba(0,0,0,.35); }
   .cmp-card__body{ padding: 16px; }
@@ -92,7 +93,7 @@
     <div class="cmp-picks">
       <div class="cmp-pick">
         <div class="cmp-avatar">
-          {% if a_obj and a_obj.logo %}<img src="{{ a_obj.logo|media_src }}" alt="" class="xl-logo">{% endif %}
+          {% if a_obj and a_obj.logo %}<img src="{{ a_obj.logo|media_src }}" alt="" class="xl-team-logo">{% endif %}
         </div>
         <div>
           <div class="cmp-name">{% if a_obj %}{{ a_obj.name }}{% else %}Team A{% endif %}</div>
@@ -101,11 +102,11 @@
 
       <div class="cmp-pick">
         <div class="cmp-avatar">
-          {% if b_obj and b_obj.logo %}<img src="{{ b_obj.logo|media_src }}" alt="" class="xl-logo">{% endif %}
+          {% if b_obj and b_obj.logo %}<img src="{{ b_obj.logo|media_src }}" alt="" class="xl-team-logo">{% endif %}
         </div>
         <div>
           <div class="cmp-name">{% if b_obj %}{{ b_obj.name }}{% else %}Team B{% endif %}</div>
-          <div class="cmp-sub">Head-to-head only (played fixtures).</div>
+          
         </div>
       </div>
     </div>
@@ -160,7 +161,10 @@
         </table>
       </div>
     {% else %}
-{% endif %}
+      <div class="p-3" style="border:1px dashed rgba(255,255,255,.18); border-radius: 18px; background: rgba(255,255,255,.03); color: var(--xl-muted);">
+        No head-to-head matches found for the selected scope.
+      </div>
+    {% endif %}
 
   </div>
 </div>
