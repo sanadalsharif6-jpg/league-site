@@ -150,6 +150,19 @@ XL_ENABLE_AUTO_UPDATES = os.environ.get("XL_ENABLE_AUTO_UPDATES", "0") in ("1", 
 # Optional: if you ever want automatic scope rebuilds on transfer saves, set this to 1.
 XL_REBUILD_SCOPES_ON_TRANSFER = os.environ.get("XL_REBUILD_SCOPES_ON_TRANSFER", "0") in ("1", "true", "True")
 
+# =========================
+# Cache
+# =========================
+# Lightweight in-memory cache to reduce DB load for high-traffic pages.
+# Works on Render Free and does not change templates/UI.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "xl-league-locmem",
+        "TIMEOUT": 60,
+    }
+}
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # =========================

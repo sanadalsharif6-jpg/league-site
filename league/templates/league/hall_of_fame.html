@@ -50,7 +50,11 @@
                     {% if x.team %}
                       <div class="muted small d-flex align-items-center gap-2 mt-1">
                         {% if x.team.logo %}
+<<<<<<< HEAD
                           <img src="{{ x.team.logo|media_src }}" alt="{{ x.team.name }} logo" class="xl-team-logo--sm" />
+=======
+                          <img src="{{ x.team.logo|media_src }}" alt="{{ x.team.name }} logo" class="team-logo team-logo--sm">
+>>>>>>> 5d0bb8ff718e5a3a6d69ab0400e019d38954852a
                         {% endif %}
                         <span>{{ x.team.name }}</span>
                       </div>

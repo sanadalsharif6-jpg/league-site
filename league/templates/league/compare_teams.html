@@ -1,5 +1,7 @@
 {% extends "league/base.html" %}
-{% block title %}Compare Teams | Xl LIBYAN FANTASY{% endblock %}
+{% block title %}Compare Teams | Xl LIBYAN FANTASY
+{% endif %}
+{% endblock %}
 {% block content %}
 
 <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-3">
@@ -89,11 +91,21 @@
         <button type="submit">Compare</button>
       </div>
     </form>
+{% if h2h.played == 0 %}
+<div class="xl-card" style="margin-top:12px;">
+  <div class="xl-muted">No head-to-head matches found for the selected scope.</div>
+</div>
+{% else %}
+
 
     <div class="cmp-picks">
       <div class="cmp-pick">
         <div class="cmp-avatar">
+<<<<<<< HEAD
           {% if a_obj and a_obj.logo %}<img src="{{ a_obj.logo|media_src }}" alt="" class="xl-team-logo">{% endif %}
+=======
+          {% if a_obj and a_obj.logo %}<img src="{{ a_obj.logo|media_src }}" alt="" class="team-logo">{% endif %}
+>>>>>>> 5d0bb8ff718e5a3a6d69ab0400e019d38954852a
         </div>
         <div>
           <div class="cmp-name">{% if a_obj %}{{ a_obj.name }}{% else %}Team A{% endif %}</div>
@@ -102,11 +114,19 @@
 
       <div class="cmp-pick">
         <div class="cmp-avatar">
+<<<<<<< HEAD
           {% if b_obj and b_obj.logo %}<img src="{{ b_obj.logo|media_src }}" alt="" class="xl-team-logo">{% endif %}
         </div>
         <div>
           <div class="cmp-name">{% if b_obj %}{{ b_obj.name }}{% else %}Team B{% endif %}</div>
           
+=======
+          {% if b_obj and b_obj.logo %}<img src="{{ b_obj.logo|media_src }}" alt="" class="team-logo">{% endif %}
+        </div>
+        <div>
+          <div class="cmp-name">{% if b_obj %}{{ b_obj.name }}{% else %}Team B{% endif %}</div>
+          <div class="cmp-sub"></div>
+>>>>>>> 5d0bb8ff718e5a3a6d69ab0400e019d38954852a
         </div>
       </div>
     </div>
@@ -209,4 +229,6 @@
   })();
 </script>
 
+
+{% endif %}
 {% endblock %}

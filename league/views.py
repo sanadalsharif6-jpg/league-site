@@ -8,6 +8,7 @@ from collections import defaultdict
 
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Prefetch
+from django.views.decorators.cache import cache_page
 
 from .models import (
     Season, Competition, Scope,
@@ -89,6 +90,7 @@ def home(request):
     return render(request, "league/home.html", context)
 
 
+@cache_page(30)
 def standings(request):
     season, comp, seasons, competitions = _active_season_competition(request)
 
@@ -160,6 +162,7 @@ def standings(request):
         "selected_scope": locals().get("selected_scope"),
     })
 
+@cache_page(30)
 def players_list(request):
     season, comp, seasons, competitions = _active_season_competition(request)
 
@@ -216,6 +219,7 @@ def players_list(request):
     return render(request, "league/players.html", context)
 
 
+@cache_page(30)
 def player_detail(request, player_id: int):
     season, comp, seasons, competitions = _active_season_competition(request)
     player = get_object_or_404(Player, pk=player_id)
@@ -303,6 +307,7 @@ def player_detail(request, player_id: int):
     return render(request, "league/player_detail.html", context)
 
 
+@cache_page(20)
 def fixtures_view(request):
     season, comp, seasons, competitions = _active_season_competition(request)
 
@@ -423,6 +428,7 @@ def teams_list(request):
     return render(request, "league/teams.html", {"teams": teams})
 
 
+@cache_page(30)
 def team_detail(request, team_id: int):
     season, comp, seasons, competitions = _active_season_competition(request)
     team = get_object_or_404(Team, pk=team_id)
@@ -513,6 +519,7 @@ def team_detail(request, team_id: int):
     return render(request, "league/team_detail.html", context)
 
 
+@cache_page(30)
 def compare_teams(request):
     season, comp, seasons, competitions = _active_season_competition(request)
     scope_id = request.GET.get("scope")
@@ -547,6 +554,7 @@ def compare_teams(request):
     }
     return render(request, "league/compare_teams.html", context)
 
+@cache_page(30)
 def compare_players(request):
     season, comp, seasons, competitions = _active_season_competition(request)
     scope_id = request.GET.get("scope")
@@ -596,6 +604,7 @@ from collections import defaultdict
 
 from collections import defaultdict
 
+@cache_page(60)
 def awards(request):
     seasons = Season.objects.all().order_by("-start_date")
     competitions = Competition.objects.all().order_by("comp_type", "name")
@@ -691,6 +700,7 @@ def award_type_detail(request, type_id: int):
     })
 
 
+@cache_page(30)
 def transfers_view(request):
     season, comp, seasons, competitions = _active_season_competition(request)
 
@@ -710,6 +720,7 @@ def transfers_view(request):
 
 from .models import HallOfFameEntry
 
+@cache_page(60)
 def hall_of_fame(request):
     season, comp, seasons, competitions = _active_season_competition(request)
 

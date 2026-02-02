@@ -86,7 +86,11 @@
                                 {% if a.player and a.player.photo %}
                                   <img src="{{ a.player.photo|media_src }}" alt="{{ a.player.name }}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" />
                                 {% elif a.team and a.team.logo %}
+<<<<<<< HEAD
                                   <img src="{{ a.team.logo|media_src }}" alt="{{ a.team.name }}" class="xl-team-logo" />
+=======
+                                  <img src="{{ a.team.logo|media_src }}" alt="{{ a.team.name }} logo" class="team-logo--sm team-logo">
+>>>>>>> 5d0bb8ff718e5a3a6d69ab0400e019d38954852a
                                 {% else %}
                                   <div style="width:44px;height:44px;border-radius:50%; background: rgba(255,255,255,.06);"></div>
                                 {% endif %}
@@ -98,7 +102,11 @@
                                   <div class="muted small d-flex flex-wrap align-items-center gap-2">
                                     {% if a.team %}
                                       {% if a.team.logo %}
+<<<<<<< HEAD
                                         <img src="{{ a.team.logo|media_src }}" alt="{{ a.team.name }} logo" class="xl-team-logo--sm" />
+=======
+                                        <img src="{{ a.team.logo|media_src }}" alt="{{ a.team.name }} logo" class="team-logo--sm team-logo">
+>>>>>>> 5d0bb8ff718e5a3a6d69ab0400e019d38954852a
                                       {% endif %}
                                       <span>{{ a.team.name }}</span>
                                     {% endif %}

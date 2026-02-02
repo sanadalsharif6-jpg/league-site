@@ -170,6 +170,11 @@ class FixtureAdmin(admin.ModelAdmin):
     date_hierarchy = "kickoff_at"
     list_per_page = 25
 
+    # ⚡ PERFORMANCE: Avoid rendering huge <select> dropdowns on the add/change form.
+    # On small instances (e.g., Render Free), large choice lists can cause OOM.
+    # Autocomplete queries the DB as you type instead.
+    autocomplete_fields = ("scope", "gameweek", "home_team", "away_team", "replay_of")
+
     list_select_related = (
         "scope", "scope__season", "scope__competition", "scope__division", "scope__group",
         "gameweek", "home_team", "away_team", "replay_of"

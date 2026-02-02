@@ -298,7 +298,12 @@
 }
 
 
-\.xl-logo{ width:48px; height:48px; border-radius:14px; padding:6px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); object-fit:contain; box-shadow: 0 6px 18px rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.16); }
+\.xl-logo{
+  width:32px;
+  height:32px;
+  border-radius:10px;
+  object-fit:contain;
+}
 .xl-date{ color: rgba(255,255,255,.92) !important; }
 .xl-table td, .xl-table th{ vertical-align: middle; }
 .xl-table a{ color: rgba(255,255,255,.90); }
@@ -362,10 +367,19 @@
 /* --- Club logos: make white backgrounds look clean --- */
 /* Standings logos */
 img.team-logo{
+  width:44px;
+  height:44px;
   background: rgba(255,255,255,.92);
-  padding: 4px;
-  border-radius: 10px;
+  padding: 6px;
+  border-radius: 14px;
   object-fit: contain;
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
+}
+.team-logo--sm{
+  width:32px;
+  height:32px;
+  padding:5px;
+  border-radius:12px;
 }
 
 /* Teams page logo wrapper (defined in template as .t-logo) */
