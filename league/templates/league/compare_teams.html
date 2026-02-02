@@ -5,11 +5,12 @@
 <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-3">
   <div>
     <h1 class="mb-1">Compare Teams</h1>
-    <div class="muted">Head-to-head summary inside the selected scope.</div>
-  </div>
+    </div>
 </div>
 
 <style>
+  .xl-logo{width:34px;height:34px;object-fit:contain;background: rgba(255,255,255,.08);padding:5px;border-radius:12px;border:1px solid rgba(255,255,255,.10);} 
+
   .cmp-card{ border:1px solid var(--xl-border); background: var(--xl-card); border-radius: 22px; box-shadow: 0 25px 60px rgba(0,0,0,.35); }
   .cmp-card__body{ padding: 16px; }
 
@@ -91,17 +92,16 @@
     <div class="cmp-picks">
       <div class="cmp-pick">
         <div class="cmp-avatar">
-          {% if a_obj and a_obj.logo %}<img src="{{ a_obj.logo|media_src }}" alt="">{% endif %}
+          {% if a_obj and a_obj.logo %}<img src="{{ a_obj.logo|media_src }}" alt="" class="xl-logo">{% endif %}
         </div>
         <div>
           <div class="cmp-name">{% if a_obj %}{{ a_obj.name }}{% else %}Team A{% endif %}</div>
-          <div class="cmp-sub">Selected scope: {% if active_scope %}{{ active_scope.division.name }} - {{ active_scope.group.name }}{% else %}-{% endif %}</div>
-        </div>
+          </div>
       </div>
 
       <div class="cmp-pick">
         <div class="cmp-avatar">
-          {% if b_obj and b_obj.logo %}<img src="{{ b_obj.logo|media_src }}" alt="">{% endif %}
+          {% if b_obj and b_obj.logo %}<img src="{{ b_obj.logo|media_src }}" alt="" class="xl-logo">{% endif %}
         </div>
         <div>
           <div class="cmp-name">{% if b_obj %}{{ b_obj.name }}{% else %}Team B{% endif %}</div>

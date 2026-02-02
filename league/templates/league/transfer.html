@@ -3,6 +3,17 @@
 {% block title %}Transfers | Xl LIBYAN FANTASY{% endblock %}
 
 {% block content %}
+
+<style>
+  .xl-logo{
+    width:28px; height:28px;
+    object-fit:contain;
+    background: rgba(255,255,255,.08);
+    padding:4px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,.10);
+  }
+</style>
   <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-2 mb-3">
     <h1 class="m-0">Transfers</h1>
 
@@ -70,7 +81,7 @@
                   <span class="d-inline-flex align-items-center gap-2">
                     {% if tr.from_team %}
                       {% if tr.from_team.logo %}
-                        <img src="{{ tr.from_team.logo|media_src }}" alt="{{ tr.from_team.name }} logo" style="width:20px;height:20px;object-fit:contain;" />
+                        <img src="{{ tr.from_team.logo|media_src }}" alt="{{ tr.from_team.name }} logo" style="width:20px;height:20px;object-fit:contain;" / class="xl-logo">
                       {% endif %}
                       <span class="fw-semibold">{{ tr.from_team.name }}</span>
                     {% else %}
@@ -85,7 +96,7 @@
                   <span class="muted small">To</span>
                   <span class="d-inline-flex align-items-center gap-2">
                     {% if tr.to_team.logo %}
-                      <img src="{{ tr.to_team.logo|media_src }}" alt="{{ tr.to_team.name }} logo" style="width:20px;height:20px;object-fit:contain;" />
+                      <img src="{{ tr.to_team.logo|media_src }}" alt="{{ tr.to_team.name }} logo" style="width:20px;height:20px;object-fit:contain;" / class="xl-logo">
                     {% endif %}
                     <span class="fw-semibold">{{ tr.to_team.name }}</span>
                   </span>

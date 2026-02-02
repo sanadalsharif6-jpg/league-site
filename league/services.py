@@ -514,30 +514,80 @@ def rebuild_power_rankings(scope: Scope) -> None:
 
 
 def head_to_head(scope: Scope, team_a_id: int, team_b_id: int):
-    qs = Fixture.objects.filter(scope=scope, is_played=True).filter(
+    """Head-to-head summary for two teams inside a scope.
+
+    NOTE: This function is resilient even when fixture cached fields (is_played,
+    home_total_points, away_total_points, match_points) are not rebuilt yet.
+    If a fixture has a Result, we treat it as played and compute points from
+    PlayerScore aggregation when needed.
+    """
+    qs = Fixture.objects.filter(scope=scope).filter(
         (Q(home_team_id=team_a_id) & Q(away_team_id=team_b_id)) |
         (Q(home_team_id=team_b_id) & Q(away_team_id=team_a_id))
-    ).order_by("kickoff_at")
+    ).select_related("result").order_by("kickoff_at")
 
-    played = qs.count()
+    played = 0
     a_w = a_d = a_l = 0
     a_pts = b_pts = 0
     biggest_margin = 0
     biggest_fixture = None
 
     for f in qs:
+        # Determine whether we consider this fixture played
+        has_result = hasattr(f, "result") and f.result_id is not None
+        if not (f.is_played or has_result):
+            continue
+
+        # Compute totals (prefer cached fields, fallback to aggregation)
+        home_pts = int(getattr(f, "home_total_points", 0) or 0)
+        away_pts = int(getattr(f, "away_total_points", 0) or 0)
+
+        if has_result and (home_pts == 0 and away_pts == 0):
+            agg = (
+                PlayerScore.objects
+                .filter(result_id=f.result_id)
+                .values("side")
+                .annotate(total=Sum("points"))
+            )
+            totals = {row["side"]: int(row["total"] or 0) for row in agg}
+            home_pts = totals.get(PlayerScore.HOME, 0)
+            away_pts = totals.get(PlayerScore.AWAY, 0)
+
+        # Accumulate A/B points depending on orientation
         if f.home_team_id == team_a_id:
-            a_pts += int(f.home_total_points); b_pts += int(f.away_total_points)
-            mp = int(f.home_match_points)
+            a_home = True
+            a_match_pts = int(getattr(f, "home_match_points", 0) or 0)
+            b_match_pts = int(getattr(f, "away_match_points", 0) or 0)
+            a_fixture_pts = home_pts
+            b_fixture_pts = away_pts
         else:
-            a_pts += int(f.away_total_points); b_pts += int(f.home_total_points)
-            mp = int(f.away_match_points)
+            a_home = False
+            a_match_pts = int(getattr(f, "away_match_points", 0) or 0)
+            b_match_pts = int(getattr(f, "home_match_points", 0) or 0)
+            a_fixture_pts = away_pts
+            b_fixture_pts = home_pts
 
-        if mp == 3: a_w += 1
-        elif mp == 1: a_d += 1
-        else: a_l += 1
+        # If match points aren't rebuilt, derive them from totals
+        if (a_match_pts == 0 and b_match_pts == 0) and (home_pts != 0 or away_pts != 0):
+            if a_fixture_pts > b_fixture_pts:
+                a_match_pts = 3
+            elif a_fixture_pts == b_fixture_pts:
+                a_match_pts = 1
+            else:
+                a_match_pts = 0
 
-        margin = abs(int(f.home_total_points) - int(f.away_total_points))
+        a_pts += int(a_fixture_pts)
+        b_pts += int(b_fixture_pts)
+        played += 1
+
+        if a_match_pts == 3:
+            a_w += 1
+        elif a_match_pts == 1:
+            a_d += 1
+        else:
+            a_l += 1
+
+        margin = abs(int(home_pts) - int(away_pts))
         if margin > biggest_margin:
             biggest_margin = margin
             biggest_fixture = f
@@ -551,6 +601,8 @@ def head_to_head(scope: Scope, team_a_id: int, team_b_id: int):
         "biggest_margin": biggest_margin,
         "biggest_fixture": biggest_fixture,
     }
+
+
 
 
 def player_vs_player(scope: Scope, player_a_id: int, player_b_id: int):

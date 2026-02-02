@@ -542,6 +542,8 @@ def compare_teams(request):
         "team_a": int(team_a) if team_a else None,
         "team_b": int(team_b) if team_b else None,
         "result": res,
+        "a_obj": Team.objects.filter(id=team_a).first() if team_a else None,
+        "b_obj": Team.objects.filter(id=team_b).first() if team_b else None,
     }
     return render(request, "league/compare_teams.html", context)
 

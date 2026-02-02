@@ -3,6 +3,17 @@
 {% block title %}Hall of Fame | Xl LIBYAN FANTASY{% endblock %}
 
 {% block content %}
+
+<style>
+  .xl-logo{
+    width:28px; height:28px;
+    object-fit:contain;
+    background: rgba(255,255,255,.08);
+    padding:4px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,.10);
+  }
+</style>
   <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-2 mb-3">
     <h1 class="m-0">Hall of Fame</h1>
     <div class="muted">Historic entries</div>
@@ -38,7 +49,7 @@
                     {% if x.team %}
                       <div class="muted small d-flex align-items-center gap-2 mt-1">
                         {% if x.team.logo %}
-                          <img src="{{ x.team.logo|media_src }}" alt="{{ x.team.name }} logo" style="width:18px;height:18px;object-fit:contain;" />
+                          <img src="{{ x.team.logo|media_src }}" alt="{{ x.team.name }} logo" style="width:18px;height:18px;object-fit:contain;" / class="xl-logo">
                         {% endif %}
                         <span>{{ x.team.name }}</span>
                       </div>

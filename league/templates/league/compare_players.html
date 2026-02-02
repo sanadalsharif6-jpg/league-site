@@ -190,7 +190,7 @@
               <div class="p-name" style="font-size: 15px;">{{ a_obj.name }}</div>
               <div class="cmp-badges mt-2">
                 {% for x in result.a_last5 %}
-                  <span class="cmp-badge{% if x|add:0 >= 50 %} cmp-badge--hi{% endif %}">{{ x }}</span>
+                  <span class="cmp-badge">{{ x }}</span>
                 {% endfor %}
               </div>
             </div>
@@ -202,7 +202,7 @@
               <div class="p-name" style="font-size: 15px;">{{ b_obj.name }}</div>
               <div class="cmp-badges mt-2">
                 {% for x in result.b_last5 %}
-                  <span class="cmp-badge{% if x|add:0 >= 50 %} cmp-badge--hi{% endif %}">{{ x }}</span>
+                  <span class="cmp-badge">{{ x }}</span>
                 {% endfor %}
               </div>
             </div>
@@ -265,6 +265,7 @@
       const aSpan = tds[1].querySelector('[data-cmp="num"]');
       const bSpan = tds[2].querySelector('[data-cmp="num"]');
       if(!aSpan || !bSpan) return;
+      if((aSpan.dataset && aSpan.dataset.skip==="1") || (bSpan.dataset && bSpan.dataset.skip==="1")) return;
       const a = toNumber(aSpan.textContent);
       const b = toNumber(bSpan.textContent);
       if(Number.isNaN(a) || Number.isNaN(b)) return;
