@@ -36,6 +36,10 @@
   .cmp-badge{ display:inline-flex; align-items:center; justify-content:center; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--xl-border); background: rgba(0,0,0,.20); font-weight: 800; }
   .cmp-badge--hi{ background: rgba(34,197,94,.16); }
 
+  /* دائرة خضراء للمتفوق */
+  .cmp-num{ display:inline-flex; align-items:center; justify-content:center; min-width: 32px; height: 32px; padding: 0 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: rgba(0,0,0,.18); font-weight: 900; }
+  .cmp-num--win{ border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.18); box-shadow: 0 10px 22px rgba(34,197,94,.12); }
+
   @media (max-width: 992px){
     .cmp-form{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
@@ -151,23 +155,23 @@
           <tbody>
             <tr>
               <td class="cmp-metric">Total Points</td>
-              <td class="cmp-strong">{{ result.a.total_points }}</td>
-              <td class="cmp-strong">{{ result.b.total_points }}</td>
+              <td class="cmp-strong"><span class="cmp-num" data-cmp="num">{{ result.a.total_points }}</span></td>
+              <td class="cmp-strong"><span class="cmp-num" data-cmp="num">{{ result.b.total_points }}</span></td>
             </tr>
             <tr>
               <td class="cmp-metric">Matches Played</td>
-              <td>{{ result.a.matches_played }}</td>
-              <td>{{ result.b.matches_played }}</td>
+              <td><span class="cmp-num" data-cmp="num">{{ result.a.matches_played }}</span></td>
+              <td><span class="cmp-num" data-cmp="num">{{ result.b.matches_played }}</span></td>
             </tr>
             <tr>
               <td class="cmp-metric">Average</td>
-              <td>{{ result.a.average_points|floatformat:2 }}</td>
-              <td>{{ result.b.average_points|floatformat:2 }}</td>
+              <td><span class="cmp-num" data-cmp="num">{{ result.a.average_points|floatformat:2 }}</span></td>
+              <td><span class="cmp-num" data-cmp="num">{{ result.b.average_points|floatformat:2 }}</span></td>
             </tr>
             <tr>
               <td class="cmp-metric">Best Match</td>
-              <td>{{ result.a.best_match_points }}</td>
-              <td>{{ result.b.best_match_points }}</td>
+              <td><span class="cmp-num" data-cmp="num">{{ result.a.best_match_points }}</span></td>
+              <td><span class="cmp-num" data-cmp="num">{{ result.b.best_match_points }}</span></td>
             </tr>
           </tbody>
         </table>
@@ -244,4 +248,32 @@
   </div>
 {% endif %}
 
-    {% endblock %}
+<script>
+  (function(){
+    function toNumber(txt){
+      if(!txt) return NaN;
+      // keep digits, dot, minus
+      const cleaned = String(txt).replace(/[^0-9.\-]/g,'');
+      return cleaned ? parseFloat(cleaned) : NaN;
+    }
+    const table = document.querySelector('.cmp-table');
+    if(!table) return;
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(tr => {
+      const tds = tr.querySelectorAll('td');
+      if(tds.length < 3) return;
+      const aSpan = tds[1].querySelector('[data-cmp="num"]');
+      const bSpan = tds[2].querySelector('[data-cmp="num"]');
+      if(!aSpan || !bSpan) return;
+      const a = toNumber(aSpan.textContent);
+      const b = toNumber(bSpan.textContent);
+      if(Number.isNaN(a) || Number.isNaN(b)) return;
+      aSpan.classList.remove('cmp-num--win');
+      bSpan.classList.remove('cmp-num--win');
+      if(a > b) aSpan.classList.add('cmp-num--win');
+      else if(b > a) bSpan.classList.add('cmp-num--win');
+    });
+  })();
+</script>
+
+{% endblock %}
