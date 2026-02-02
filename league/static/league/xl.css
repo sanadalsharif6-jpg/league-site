@@ -357,3 +357,21 @@
 .xl-stat__value{ margin-top:6px; font-weight: 800; font-size: 18px; letter-spacing: -0.2px; }
 .xl-stat--wide{ grid-column: 1 / -1; }
 @media (max-width: 520px){ .xl-statgrid{ grid-template-columns: 1fr; } }
+
+
+/* --- Club logos: make white backgrounds look clean --- */
+/* Standings logos */
+img.team-logo{
+  background: rgba(255,255,255,.92);
+  padding: 4px;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+/* Teams page logo wrapper (defined in template as .t-logo) */
+.t-logo{
+  background: rgba(255,255,255,.92) !important;
+}
+.t-logo img{
+  object-fit: contain !important;
+}

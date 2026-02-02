@@ -8,8 +8,26 @@ from .models import Transfer, Result, PlayerScore, Fixture, TeamMembership
 from .services import apply_transfer_memberships, recalculate_fixture_totals, rebuild_scope_materialized
 
 
+def _auto_updates_enabled() -> bool:
+    """Single kill-switch for ALL automatic recalculation work.
+
+    If disabled, the admin can still save objects, but derived/materialized
+    tables (fixture totals, standings, last5, etc.) are only refreshed by
+    running the management command:
+
+        python manage.py recalculate_latest
+
+    This protects the app from timeouts as data grows.
+    """
+    return bool(getattr(settings, "XL_ENABLE_AUTO_UPDATES", False))
+
+
 @receiver(post_save, sender=Transfer)
 def transfer_saved(sender, instance: Transfer, created: bool, **kwargs):
+    # If auto updates are disabled, do nothing here (safe for large datasets).
+    if not _auto_updates_enabled():
+        return
+
     # Always keep memberships consistent.
     try:
         apply_transfer_memberships(instance.id)
@@ -97,6 +115,9 @@ def _ensure_default_player_scores(result: Result):
 
 @receiver(post_save, sender=Result)
 def result_saved(sender, instance: Result, created: bool, **kwargs):
+    if not _auto_updates_enabled():
+        return
+
     # On first creation: auto-seed PlayerScore rows so admin shows players immediately.
     if created:
         _ensure_default_player_scores(instance)
@@ -108,6 +129,9 @@ def result_saved(sender, instance: Result, created: bool, **kwargs):
 
 @receiver(post_delete, sender=Result)
 def result_deleted(sender, instance: Result, **kwargs):
+    if not _auto_updates_enabled():
+        return
+
     recalculate_fixture_totals(instance.fixture_id)
     if getattr(settings, 'ENABLE_SCOPE_REBUILD_ON_SAVE', False):
         _rebuild_related_scope_by_fixture_id(instance.fixture_id)
@@ -115,6 +139,9 @@ def result_deleted(sender, instance: Result, **kwargs):
 
 @receiver(post_save, sender=PlayerScore)
 def player_score_saved(sender, instance: PlayerScore, **kwargs):
+    if not _auto_updates_enabled():
+        return
+
     recalculate_fixture_totals(instance.result.fixture_id)
     if getattr(settings, 'ENABLE_SCOPE_REBUILD_ON_SAVE', False):
         _rebuild_related_scope_by_fixture_id(instance.result.fixture_id)
@@ -122,6 +149,9 @@ def player_score_saved(sender, instance: PlayerScore, **kwargs):
 
 @receiver(post_delete, sender=PlayerScore)
 def player_score_deleted(sender, instance: PlayerScore, **kwargs):
+    if not _auto_updates_enabled():
+        return
+
     recalculate_fixture_totals(instance.result.fixture_id)
     if getattr(settings, 'ENABLE_SCOPE_REBUILD_ON_SAVE', False):
         _rebuild_related_scope_by_fixture_id(instance.result.fixture_id)

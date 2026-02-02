@@ -139,6 +139,17 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 ENABLE_SCOPE_REBUILD_ON_SAVE = False  # do NOT rebuild heavy standings on every admin save
 
+# =========================
+# Performance switches
+# =========================
+# Turn OFF all automatic recalculation work (fixture totals, standings rebuild triggers, etc.).
+# Run it manually when you want via:
+#   python manage.py recalculate_latest
+XL_ENABLE_AUTO_UPDATES = os.environ.get("XL_ENABLE_AUTO_UPDATES", "0") in ("1", "true", "True")
+
+# Optional: if you ever want automatic scope rebuilds on transfer saves, set this to 1.
+XL_REBUILD_SCOPES_ON_TRANSFER = os.environ.get("XL_REBUILD_SCOPES_ON_TRANSFER", "0") in ("1", "true", "True")
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # =========================
